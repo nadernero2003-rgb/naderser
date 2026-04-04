@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة خدمة ابتدائي</title>
+    <meta name="description" content="نظام متكامل لإدارة خدمة الكنيسة - حضور الخدام والتقارير والإعلانات">
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Tailwind CDN for utility classes -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        // Apply saved dark mode instantly before render
+        if (localStorage.getItem('theme') === 'dark' ||
+            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+</head>
+
+<body class="flex flex-col h-screen overflow-hidden dark:bg-slate-900 dark:text-slate-100">
+
+    <!-- ═══════════════════════════════════════════════════════════
+     LOADING OVERLAY
+═══════════════════════════════════════════════════════════ -->
+    <div id="loadingOverlay" class="hidden-view">
+        <div class="spinner"></div>
+        <p class="text-white/80 text-sm font-bold mt-2">جاري التحميل...</p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+     SERVICES SELECTION (Login Screen)
+═══════════════════════════════════════════════════════════ -->
+    <div id="loginOrServicesView">
+        <div class="app-logo text-center">⛪</div>
+        <h1 class="text-2xl font-extrabold text-white mb-1 text-center">نظام إدارة خدمة ابتدائي</h1>
+        <p class="app-subtitle">كنيسة مار جرجس &mdash; اختر خدمتك للبدء</p>
+        <div id="servicesGrid"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+     MAIN DASHBOARD
+═══════════════════════════════════════════════════════════ -->
+    <div id="mainDashboard" class="hidden-view">
+
+        <!-- ── Sidebar ── -->
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 flex items-center justify-center bg-teal-600 rounded-xl text-white font-bold text-lg">
+                        ⛪</div>
+                    <div>
+                        <p id="sidebarServiceName" class="sidebar-service-name">خدمة</p>
+                        <p class="sidebar-subtitle">نظام الإدارة</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav id="sidebarLinks" class="py-2">
+                <a class="sidebar-link" data-page="homePage" href="#">
+                    <i class="fas fa-home"></i><span>الرئيسية</span>
+                </a>
+                <a class="sidebar-link" data-page="servantsPage" href="#">
+                    <i class="fas fa-users"></i><span>الخدام</span>
+                </a>
+                <a id="followUpLink" class="sidebar-link hidden-view" data-page="followUpPage" href="#">
+                    <i class="fas fa-user-check"></i><span>المتابعة</span>
+                </a>
+                <a id="attendancePageLink" class="sidebar-link" data-page="attendancePage" href="#">
+                    <i class="fas fa-calendar-check"></i><span>الحضور</span>
+                </a>
+                <a id="reportsPageLink" class="sidebar-link" data-page="reportsPage" href="#">
+                    <i class="fas fa-chart-bar"></i><span>التقارير</span>
+                </a>
+                <a id="correspondenceLink" class="sidebar-link hidden-view" data-page="correspondencePage" href="#">
+                    <i class="fas fa-envelope"></i>
+                    <span>المراسلات</span>
+                    <span id="correspondenceBadge" class="hidden-view notification-badge mr-auto">0</span>
+                </a>
+                <a id="serviceAnnouncementsLink" class="sidebar-link hidden-view" data-page="serviceAnnouncementsPage"
+                    href="#">
+                    <i class="fas fa-bullhorn"></i>
+                    <span>إعلانات الأمانة</span>
+                    <span id="serviceAnnouncementsBadge" class="hidden-view notification-badge mr-auto">0</span>
+                </a>
+                <a id="calendarPageLink" class="sidebar-link" data-page="calendarPage" href="#">
+                    <i class="fas fa-calendar-alt"></i><span id="calendarLinkText">التقويم</span>
+                </a>
+                <!-- Admin-only links -->
+                <a id="correspondenceCenterLink" class="sidebar-link hidden-view" data-page="correspondenceCenterPage"
+                    href="#">
+                    <i class="fas fa-inbox"></i><span>مركز المراسلات</span>
+                    <span id="correspondenceCenterBadge" class="hidden-view notification-badge mr-auto">0</span>
+                </a>
+                <a id="announcementsBoardLink" class="sidebar-link hidden-view" data-page="announcementsBoardPage"
+                    href="#">
+                    <i class="fas fa-broadcast-tower"></i><span>إرسال إعلانات</span>
+                </a>
+            </nav>
+
+            <!-- Footer -->
+            <div class="sidebar-footer">
+                <button id="openSettingsBtn" class="sidebar-link w-full text-right">
+                    <i class="fas fa-cog"></i><span>الإعدادات</span>
+                </button>
+                <label class="sidebar-link cursor-pointer">
+                    <i class="fas fa-moon"></i><span>الوضع الليلي</span>
+                    <div class="theme-switch mr-auto">
+                        <input type="checkbox" id="theme-checkbox">
+                        <div class="theme-track">
+                            <div class="theme-thumb">🌙</div>
+                        </div>
+                    </div>
+                </label>
+                <button id="backToServices" class="sidebar-link w-full text-right">
+                    <i class="fas fa-arrow-left"></i><span>تغيير الخدمة</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- ── Sidebar overlay (mobile) ── -->
+        <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black/50 z-40 md:hidden"></div>
+
+        <!-- ── Main Content ── -->
+        <main id="mainContent">
+            <!-- Mobile Header -->
+            <header id="mobileHeader">
+                <button id="hamburgerBtn" class="text-slate-600 dark:text-slate-300 p-2">
+                    <i class="fas fa-bars text-lg"></i>
+                </button>
+                <span id="mobilePageTitle" class="font-bold text-slate-700 dark:text-slate-200">الرئيسية</span>
+                <div class="w-8"></div>
+            </header>
+
+            <!-- Content Area -->
+            <div id="contentArea">
+
+                <!-- ════════════════════════════════════════════════════════════
+     HOME PAGE
+════════════════════════════════════════════════════════════ -->
+                <section id="homePage" class="page-content hidden-view">
+                    <div class="page-header">
+                        <h1 class="page-title"><i class="fas fa-home"></i> لوحة المعلومات</h1>
+                        <div class="flex gap-2">
+                            <!-- These are now handled in the dashboard section below -->
+                        </div>
+                    </div>
+
+                    <!-- ── Admin KPI Cards (top of page, admin only) ── -->
+                    <div id="adminKpiSection" class="hidden-view mb-6">
+                        <div id="kpiContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
+                    </div>
+
+                    <!-- Birthdays Alert -->
+                    <div id="birthdayAlertsContainer"></div>
+
+                    <!-- ── Service Dashboard (10 services) ── -->
+                    <div id="serviceDashboardContainer">
+                        <!-- Top Cards -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                            <!-- Total Servants (Hidden in Admin mode) -->
+                            <div id="totalServantsCard"
+                                class="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg flex items-center justify-between cursor-pointer transition-transform hover:scale-105">
+                                <div>
+                                    <p class="text-slate-500 dark:text-slate-400 text-sm font-bold mb-1">إجمالي الخدام
+                                    </p>
+                                    <p id="totalServantsStat"
+                                        class="text-4xl font-black text-teal-600 dark:text-teal-400">0</p>
+                                </div>
+                                <div class="bg-teal-50 dark:bg-teal-900/30 p-4 rounded-full">
+                                    <i class="fas fa-users text-4xl text-teal-500"></i>
+                                </div>
+                            </div>
+
+                            <!-- Birthdays -->
+                            <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg flex flex-col">
+                                <h3 class="font-bold text-pink-600 dark:text-pink-400 mb-2 text-lg flex-shrink-0">أعياد
+                                    ميلاد قادمة</h3>
+                                <div id="upcomingBirthdayStat" class="overflow-y-auto flex-grow"
+                                    style="max-height: 450px;"></div>
+                            </div>
+
+                            <!-- Last Friday Absences (with names) -->
+                            <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg flex flex-col">
+                                <div
+                                    class="flex justify-between items-baseline mb-4 border-b dark:border-slate-700 pb-2">
+                                    <h3 class="font-bold text-red-600 dark:text-red-400 text-lg">غياب الجمعة الماضية
+                                    </h3>
+                                    <div id="lastFridayAbsenceCount"
+                                        class="font-bold text-lg bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 px-3 py-1 rounded-full">
+                                    </div>
+                                </div>
+                                <div id="lastFridayAbsenceList"
+                                    class="text-sm text-slate-500 dark:text-slate-400 flex flex-wrap gap-2 overflow-y-auto"
+                                    style="max-height: 450px;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Activity Status Cards (colored, clickable) -->
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg mb-6">
+                            <h3 class="font-bold text-teal-600 dark:text-teal-400 mb-2 text-lg">حالة تسجيل أنشطة الجمعة
+                                الماضية</h3>
+                            <div id="lastFridayStatusContainer"
+                                class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"></div>
+                        </div>
+
+                        <!-- Charts + Quick Actions -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
+                                <h2 class="text-xl font-bold mb-4">متوسط الحضور (آخر 30 يوم)</h2>
+                                <div class="relative h-80">
+                                    <canvas id="homeAttendanceChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="space-y-6">
+                                <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
+                                    <h2 class="text-xl font-bold mb-4">إجراءات سريعة</h2>
+                                    <div class="space-y-3">
+                                        <button id="quickAddServant"
+                                            class="w-full text-right p-3 rounded-lg bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-800 transition-colors">
+                                            <i class="fas fa-user-plus w-6 ml-2"></i> إضافة خادم جديد
+                                        </button>
+                                        <button id="quickGoToAttendance"
+                                            class="w-full text-right p-3 rounded-lg bg-teal-100 dark:bg-teal-900 text-teal-800 dark:text-teal-200 hover:bg-teal-200 dark:hover:bg-teal-800 transition-colors">
+                                            <i class="fas fa-check-square w-6 ml-2"></i> تسجيل الحضور
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="backupRestoreSection"
+                                    class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
+                                    <h2 class="text-xl font-bold mb-4">النسخ الاحتياطي</h2>
+                                    <div class="flex flex-col md:flex-row gap-3">
+                                        <button id="backupBtn"
+                                            class="w-full flex-1 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
+                                            style="background-color: var(--color-info, #2563eb);">
+                                            <i class="fas fa-download"></i> حفظ
+                                        </button>
+                                        <button id="restoreBtn"
+                                            class="w-full flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all flex items-center justify-center gap-2">
+                                            <i class="fas fa-upload"></i> استرجاع
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── Admin Dashboard Container (kept for JS toggle) ── -->
+                    <div id="adminDashboardContainer" class="hidden-view"></div>
+
+                    <!-- Activity Attendees Modal -->
+                    <div id="activityAttendeesModal"
+                        class="hidden-view fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+                        <div
+                            class="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-11/12 md:w-1/2 lg:w-1/3 overflow-hidden">
+                            <div class="bg-teal-600 p-4 flex justify-between items-center text-white">
+                                <h3 id="activityAttendeesModalTitle" class="text-lg font-bold"></h3>
+                                <button
+                                    onclick="document.getElementById('activityAttendeesModal').classList.add('hidden-view')"
+                                    class="hover:text-red-200">
+                                    <i class="fas fa-times text-xl"></i>
+                                </button>
+                            </div>
+                            <div id="activityAttendeesModalBody" class="p-6 max-h-[60vh] overflow-y-auto"></div>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- ════════════════════════════════════════════════════════════
+     SERVANTS PAGE
+════════════════════════════════════════════════════════════ -->
+                <section id="servantsPage" class="page-content hidden-view">
+                    <div class="page-header">
+                        <h1 class="page-title"><i class="fas fa-users"></i> الخدام</h1>
+                        <div class="flex flex-wrap gap-2">
+                            <button id="servantsViewToggle" class="btn btn-ghost text-sm" title="تبديل طريقة العرض">
+                                <i class="fas fa-th-large"></i>
+                            </button>
+                            <button id="addManualBtn" class="btn btn-primary text-sm">
+                                <i class="fas fa-user-plus"></i> إضافة خادم
+                            </button>
+                            <button id="importExcelBtn" class="btn btn-ghost text-sm">
+                                <i class="fas fa-file-excel"></i> استيراد Excel
+                            </button>
+                            <button id="exportServantsExcelBtn" class="btn btn-ghost text-sm">
+                                <i class="fas fa-download"></i> تصدير
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Birthday alerts here too -->
+                    <div id="birthdayAlertsContainerServants"></div>
+
+                    <!-- Search & Filters -->
+                    <div class="card mb-4 flex flex-col md:flex-row gap-4">
+                        <div id="serviceFilterGroup" class="hidden-view flex-grow md:w-1/3">
+                            <label class="block text-xs font-bold text-slate-500 mb-1">فلتر الخدمة</label>
+                            <div class="flex items-center gap-2">
+                                <select id="servantServiceFilter" class="form-input form-select w-full">
+                                    <option value="">كل الخدمات</option>
+                                </select>
+                                <span id="servantFilterCount" class="bg-teal-100 text-teal-800 text-xs px-2 py-1 flex-shrink-0 font-bold rounded"></span>
+                            </div>
+                        </div>
+                        <div class="flex-grow">
+                            <label class="block text-xs font-bold text-slate-500 mb-1">بحث بالاسم أو الرقم</label>
+                            <input id="searchInput" type="text" placeholder="🔍 بحث بالاسم أو الموبايل أو الرقم القومي..."
+                                class="form-input w-full">
+                        </div>
+                    </div>
+
+                    <!-- Premium Servants Grid View -->
+                    <div id="servantsTableBody" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20" style="max-height:calc(100vh - 270px); overflow-y:auto; padding: 1rem;">
+                    </div>
+                </section>
+
+                <!-- ════════════════════════════════════════════════════════════
+     ATTENDANCE PAGE
+════════════════════════════════════════════════════════════ -->
+                <section id="attendancePage" class="page-content hidden-view">
+                    <h1 class="page-title mb-6"><i class="fas fa-calendar-check"></i> تسجيل الحضور</h1>
+
+                    <!-- Year/Month selectors (Professional Filter) -->
+                    <div class="card mb-6 overflow-hidden border-teal-100 dark:border-teal-900 shadow-teal-500/5">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="relative">
+                                <label class="form-label mb-2 flex items-center gap-2">
+                                    <i class="fas fa-calendar-alt text-teal-600"></i> السنة
+                                </label>
+                                <div class="relative group">
+                                    <select id="yearSelector"
+                                        class="form-input form-select pr-10 font-bold transition-shadow hover:shadow-sm">
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="relative">
+                                <label class="form-label mb-2 flex items-center gap-2">
+                                    <i class="fas fa-calendar-day text-teal-600"></i> الشهر
+                                </label>
+                                <div class="relative group">
+                                    <select id="monthSelector"
+                                        class="form-input form-select pr-10 disabled:opacity-50 transition-shadow hover:shadow-sm"
+                                        disabled>
+                                        <option value="">-- اختــر الشهــر --</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fridays Grid -->
+                    <div class="card mb-6">
+                        <h3 class="font-bold mb-4 text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                            <i class="fas fa-calendar-day text-teal-500"></i> جُمع الشهر
+                        </h3>
+                        <div id="fridaysGrid" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2"></div>
+                    </div>
+
+                    <!-- Activity Buttons -->
+                    <div id="activityButtons" class="hidden-view grid grid-cols-3 md:grid-cols-6 gap-2 mb-6"></div>
+
+                    <!-- Servants Checklist -->
+                    <div id="attendanceListContainer" class="hidden-view card">
+                        <h3 id="attendanceListTitle" class="font-bold text-lg mb-4 text-teal-600 dark:text-teal-400">
+                        </h3>
+
+                        <!-- No-activity section -->
+                        <div id="noActivitySection"
+                            class="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-700">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" id="noActivityCheck" class="w-5 h-5 rounded text-amber-500">
+                                <span id="noActivityLabel" class="font-bold text-amber-800 dark:text-amber-200">لا يوجد
+                                    نشاط لهذا اليوم</span>
+                            </label>
+                            <input id="noActivityReason" type="text" placeholder="سبب الإلغاء..."
+                                class="form-input mt-3 text-sm hidden">
+                        </div>
+
+                        <div id="servantsChecklist" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 mb-4">
+                        </div>
+
+                        <button id="saveActivityAttendanceBtn" class="btn btn-primary w-full md:w-auto">
+                            <i class="fas fa-save"></i> حفظ الحضور
+                        </button>
+                    </div>
+                </section>
+
+                <!-- ════════════════════════════════════════════════════════════
+     REPORTS PAGE
+════════════════════════════════════════════════════════════ -->
+                <section id="reportsPage" class="page-content hidden-view">
+                    <h1 class="page-title mb-6"><i class="fas fa-chart-bar"></i> التقارير</h1>
+
+                    <!-- Report Tabs -->
+                    <div class="card mb-6">
+                        <div class="flex flex-wrap gap-2 mb-6">
+                            <button class="report-tab active" data-report-type="individual">فردي</button>
+                            <button class="report-tab" data-report-type="comprehensive">شامل</button>
+                            <button class="report-tab" data-report-type="activity">نشاط</button>
+                            <button id="comparisonReportTab" class="report-tab hidden-view"
+                                data-report-type="comparison">مقارنة</button>
+                            <button class="report-tab" data-report-type="period-comparison">مقارنة فترات</button>
+                        </div>
+
+                        <!-- Standard Filters -->
+                        <div id="standardReportsContainer">
+                            <!-- Date Range -->
+                            <div class="grid grid-cols-2 gap-3 mb-4">
+                                <div>
+                                    <label class="form-label">من تاريخ <span class="text-[10px] text-slate-400 font-normal tracking-tighter">(يوم / شهر / سنة)</span></label>
+                                    <input id="reportStartDate" type="date" lang="en-GB" class="form-input">
+                                </div>
+                                <div>
+                                    <label class="form-label">إلى تاريخ <span class="text-[10px] text-slate-400 font-normal tracking-tighter">(يوم / شهر / سنة)</span></label>
+                                    <input id="reportEndDate" type="date" lang="en-GB" class="form-input">
+                                </div>
+                            </div>
+
+                            <!-- Service Filter (Admin) -->
+                            <div id="serviceFilterContainer" class="hidden-view mb-4">
+                                <label class="form-label">الخدمة</label>
+                                <select id="reportServiceSelector" class="form-input form-select"></select>
+                            </div>
+
+                            <!-- Servant Selector -->
+                            <div id="servantSelectorContainer" class="mb-4">
+                                <label class="form-label">الخادم</label>
+                                <select id="reportServantSelector" class="form-input form-select"></select>
+                            </div>
+
+                            <!-- Activity Selector -->
+                            <div id="activitySelectorContainer" class="hidden-view mb-4">
+                                <label class="form-label">النشاط</label>
+                                <select id="reportActivitySelector" class="form-input form-select"></select>
+                            </div>
+
+                            <button id="generateReportBtn" class="btn btn-primary">
+                                <i class="fas fa-play"></i> عرض التقرير
+                            </button>
+                        </div>
+
+                        <!-- Comparison (Admin only) -->
+                        <div id="comparisonReportContainer" class="hidden-view">
+                            <div class="grid grid-cols-2 gap-3 mb-4">
+                                <div>
+                                    <label class="form-label">الخدمة 1</label>
+                                    <select id="comparisonServiceSelector1" class="form-input form-select"></select>
+                                </div>
+                                <div>
+                                    <label class="form-label">الخدمة 2</label>
+                                    <select id="comparisonServiceSelector2" class="form-input form-select"></select>
+                                </div>
+                            </div>
+                            <button id="generateComparisonBtn" class="btn btn-primary">
+                                <i class="fas fa-balance-scale"></i> مقارنة
+                            </button>
+                            <div class="mt-6" style="height: 300px">
+                                <canvas id="comparisonChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Period Comparison -->
+                        <div id="periodComparisonReportContainer" class="hidden-view">
+                            <h3 class="font-bold mb-3 text-slate-700 dark:text-slate-200">الخادم المحدد</h3>
+                            <select id="periodReportServantSelector" class="form-input form-select mb-4"></select>
+                            <h3 class="font-bold mb-3 text-slate-700 dark:text-slate-200">الفترات الزمنية</h3>
+                            <div id="periodsContainer" class="space-y-3 mb-4"></div>
+                            <div class="flex gap-2 mb-6">
+                                <button id="addPeriodBtn" class="btn btn-ghost text-sm">
+                                    <i class="fas fa-plus"></i> إضافة فترة
+                                </button>
+                                <button id="generatePeriodComparisonBtn" class="btn btn-primary text-sm">
+                                    <i class="fas fa-chart-bar"></i> مقارنة الفترات
+                                </button>
+                            </div>
+                            <div id="periodReportOutput" class="hidden-view"></div>
+                        </div>
+                    </div>
+
+                    <!-- Report Output -->
+                    <div id="reportOutput" class="hidden-view card">
+                        <div class="flex flex-wrap gap-2 mb-4 pb-4 border-b dark:border-slate-700">
+                            <button id="exportPdfBtn" class="btn btn-ghost text-sm">
+                                <i class="fas fa-file-pdf text-red-500"></i> PDF
+                            </button>
+                            <button id="exportPngBtn" class="btn btn-ghost text-sm">
+                                <i class="fas fa-image text-blue-500"></i> صورة
+                            </button>
+                        </div>
+                        <div id="reportContent"></div>
+                    </div>
+                </section>
+
+                <!-- ════════════════════════════════════════════════════════════
+     CALENDAR PAGE
+════════════════════════════════════════════════════════════ -->
+                <section id="calendarPage" class="page-content hidden-view">
+                    <div class="page-header">
+                        <h1 class="page-title"><i class="fas fa-calendar-alt"></i> التقويم</h1>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="card mb-6">
+                        <div class="flex flex-wrap gap-3 items-end">
+                            <div id="calendarServiceFilterContainer" class="hidden-view">
+                                <label class="form-label">الخدمة</label>
+                                <select id="calendarServiceSelector" class="form-input form-select"></select>
+                            </div>
+                            <div>
+                                <label class="form-label">السنة</label>
+                                <select id="calendarYearSelector" class="form-input form-select"></select>
+                            </div>
+                            <div>
+                                <label class="form-label">الشهر</label>
+                                <select id="calendarMonthSelector" class="form-input form-select"></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calendar Grid -->
+                    <div class="card">
+                        <div id="calendarContent"></div>
+                    </div>
+                </section>
+
+                <!-- ════════════════════════════════════════════════════════════
+     CORRESPONDENCE PAGE (non-admin)
+════════════════════════════════════════════════════════════ -->
+                <section id="correspondencePage" class="page-content hidden-view">
+                    <h1 class="page-title mb-6"><i class="fas fa-envelope"></i> المراسلات</h1>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Send -->
+                        <div class="card">
+                            <h3 class="font-bold text-lg mb-4 text-teal-600 dark:text-teal-400">
+                                <i class="fas fa-paper-plane ml-2"></i> مراسلة الأمانة
+                            </h3>
+                            <textarea id="noteToAdminInput" placeholder="اكتب رسالتك للأمين العام هنا..."
+                                class="form-input w-full h-32 resize-none mb-3"></textarea>
+                            <button id="sendNoteToAdminBtn" class="btn btn-primary w-full">
+                                <i class="fas fa-send"></i> إرسال
+                            </button>
+                        </div>
+                        <!-- History -->
+                        <div class="card">
+                            <h3 class="font-bold text-lg mb-4 text-slate-700 dark:text-slate-200">
+                                <i class="fas fa-history ml-2"></i> سجل المرسلة
+                            </h3>
+                            <div id="sentNotesHistory" class="space-y-3 max-h-96 overflow-y-auto"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ════════════════════════════════════════════════════════════
+     CORRESPONDENCE CENTER PAGE (admin)
+════════════════════════════════════════════════════════════ -->
+                <section id="correspondenceCenterPage" class="page-content hidden-view">
+                    <h1 class="page-title mb-6"><i class="fas fa-inbox"></i> مركز المراسلات</h1>
+                    <div class="card">
+                        <h3 class="font-bold text-lg mb-4 text-slate-700 dark:text-slate-200">الرسائل الواردة</h3>
+                        <div id="incomingNotesContainer" class="space-y-3 max-h-[70vh] overflow-y-auto"></div>
+                    </div>
+                </section>
+
+                <!-- ════════════════════════════════════════════════════════════
+     SERVICE ANNOUNCEMENTS PAGE (non-admin bulletin board)
+════════════════════════════════════════════════════════════ -->
+                <section id="serviceAnnouncementsPage" class="page-content hidden-view">
+                    <h1 id="bulletinBoardTitle" class="page-title mb-6"><i class="fas fa-bullhorn"></i> إعلانات الأمانة
+                    </h1>
+                    <div id="bulletinBoard" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                    <div id="loadMoreAnnouncementsContainer" class="hidden-view text-center mt-6">
+                        <button id="loadMoreAnnouncementsBtn" class="btn btn-ghost">
+                            <i class="fas fa-chevron-down"></i> عرض المزيد
+                        </button>
+                    </div>
+                </section>
+
+                <!-- ════════════════════════════════════════════════════════════
+     ANNOUNCEMENTS BOARD PAGE (admin sends)
+════════════════════════════════════════════════════════════ -->
+                <section id="announcementsBoardPage" class="page-content hidden-view">
+                    <h1 class="page-title mb-6"><i class="fas fa-broadcast-tower"></i> إرسال إعلانات</h1>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Compose -->
+                        <div class="card">
+                            <h3 class="font-bold text-lg mb-4 text-teal-600 dark:text-teal-400">إعلان جديد</h3>
+                            <textarea id="newAnnouncementInput" placeholder="اكتب الإعلان هنا..."
+                                class="form-input w-full h-32 resize-none mb-3"></textarea>
+                            <div class="mb-3">
+                                <label class="form-label mb-2">إرسال إلى:</label>
+                                <div id="announcementTarget"
+                                    class="max-h-48 overflow-y-auto space-y-1 border rounded-xl p-2 dark:border-slate-600">
+                                </div>
+                            </div>
+                            <button id="addAnnouncementBtn" class="btn btn-primary w-full">
+                                <i class="fas fa-paper-plane"></i> إرسال الإعلان
+                            </button>
+                        </div>
+                        <!-- Sent List -->
+                        <div class="card">
+                            <h3 class="font-bold text-lg mb-4 text-slate-700 dark:text-slate-200">الإعلانات المرسلة</h3>
+                            <div id="adminAnnouncementsList" class="space-y-3 max-h-96 overflow-y-auto"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ════════════════════════════════════════════════════════════
+     FOLLOW-UP PAGE
+════════════════════════════════════════════════════════════ -->
+                <section id="followUpPage" class="page-content hidden-view">
+
+                    <!-- ═══════════ قسم: متابعة تسجيل الحضور (شبكة الأنشطة) ═══════════ -->
+                    <div id="activityRegistrationGridContainer" class="mb-6"></div>
+
+                    <!-- ═══════════ قسم: خدام بحاجة للمتابعة ═══════════ -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden">
+                        <div class="px-8 py-6 border-b border-slate-100 dark:border-slate-700">
+                            <h2 class="font-black text-2xl text-right text-slate-800 dark:text-slate-200">خدام بحاجة للمتابعة</h2>
+                        </div>
+
+                        <div class="p-6">
+                            <!-- Management Bar: Filters & Search -->
+                            <div class="flex flex-col xl:flex-row items-stretch xl:items-end gap-4 mb-8 bg-slate-50 dark:bg-slate-900/40 p-5 rounded-3xl border border-slate-100 dark:border-slate-700/50 shadow-sm">
+                                <!-- Horizontal Filter Group -->
+                                <div class="flex flex-wrap items-center gap-4">
+                                    <!-- Year -->
+                                    <div class="flex flex-col min-w-[100px]">
+                                        <label class="text-[10px] font-black uppercase tracking-widest mb-1.5 text-slate-400 block px-1">السنة</label>
+                                        <select id="absenceFilterYearSelector"
+                                            class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 p-2.5 rounded-xl text-sm font-bold outline-none transition-all shadow-sm cursor-pointer text-center">
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Months -->
+                                    <div class="flex flex-col relative min-w-[180px]" id="monthFilterContainer">
+                                        <label class="text-[10px] font-black uppercase tracking-widest mb-1.5 text-slate-400 block px-1">الشهور المختارة</label>
+                                        <button id="monthFilterBtn"
+                                            class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-teal-500 p-2.5 rounded-xl text-sm font-bold flex items-center justify-between gap-3 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all border-dashed">
+                                            <span class="flex items-center gap-2 truncate">
+                                                <i class="fas fa-calendar-day text-teal-500 text-xs"></i>
+                                                <span id="monthFilterBtnText" class="truncate">اختر الشهور</span>
+                                            </span>
+                                            <i class="fas fa-chevron-down text-[10px] text-slate-400"></i>
+                                        </button>
+                                        <div id="monthFilterDropdown"
+                                            class="absolute top-full mt-2 w-64 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-2xl shadow-2xl p-3 z-[60] hidden-view animate-in zoom-in-95 duration-200 max-h-80 overflow-y-auto custom-scrollbar ring-8 ring-black/5">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Integrated Search Bar -->
+                                <div class="flex-grow">
+                                    <label class="text-[10px] font-black uppercase tracking-widest mb-1.5 text-slate-400 block px-1">البحث الذكي بالاسم</label>
+                                    <div class="relative group">
+                                        <i class="fas fa-search absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-teal-500 transition-colors text-xs"></i>
+                                        <input type="text" id="followUpSearchInput" placeholder="ادخل اسم الخادم للبحث السريع في النتائج..." 
+                                            class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2.5 pr-10 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 transition-all shadow-sm">
+                                        <button id="clearSearchBtn" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-red-500 transition-colors hidden-view">
+                                            <i class="fas fa-times-circle"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Hidden but logical generate button -->
+                                <button id="generateFollowUpBtn" class="hidden-view">تحديث</button>
+                            </div>
+
+                            <!-- Target Activities (Selection Row) -->
+                            <div class="mb-10 text-center">
+                                <label class="text-[10px] font-black uppercase tracking-widest mb-4 text-slate-400 block">اضغط لتحديد نوع النشاط المستهدف للمتابعة</label>
+                                <div id="activityFilterButtons" class="flex flex-wrap justify-center gap-5">
+                                    <!-- Dynamically generated by JS -->
+                                </div>
+                            </div>
+
+                            <!-- Results Section: Professional Grid -->
+                            <div id="absenceFollowUpResults" class="relative min-h-[300px]">
+                                <!-- Dynamically populated into a grid layout by JS -->
+                                <div class="flex flex-col items-center justify-center py-20 text-slate-300 dark:text-slate-600">
+                                    <div class="w-16 h-16 rounded-full border-4 border-current border-dashed mb-4 animate-spin-slow opacity-20"></div>
+                                    <p class="font-black text-lg opacity-40">في انتظار تحديد معايير المتابعة...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+
+            </div><!-- end contentArea -->
+        </main>
+    </div><!-- end mainDashboard -->
+
+    <!-- ═══════════════════════════════════════════════════════════════
+     MODALS
+═══════════════════════════════════════════════════════════════ -->
+
+    <!-- ── Password Modal ── -->
+    <div id="passwordModal" class="modal-overlay hidden-view">
+        <div class="modal-content max-w-md">
+            <button class="close-modal-btn"><i class="fas fa-times"></i></button>
+            <h2 class="modal-title"><i class="fas fa-lock"></i> الدخول</h2>
+            <p class="text-slate-500 text-sm mb-4">
+                كلمة السر لـ: <strong id="passwordModalServiceName" class="text-teal-600"></strong>
+            </p>
+            <form id="passwordForm" onsubmit="return false">
+                <input type="password" id="servicePasswordInput" placeholder="كلمة السر..."
+                    class="form-input w-full mb-4" autocomplete="current-password">
+                <button type="submit" class="btn btn-primary w-full">
+                    <i class="fas fa-sign-in-alt"></i> دخول
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── Service Choice Modal ── -->
+    <div id="serviceChoiceModal" class="modal-overlay hidden-view">
+        <div class="modal-content max-w-md">
+            <button class="close-modal-btn"><i class="fas fa-times"></i></button>
+            <h2 id="serviceChoiceModalTitle" class="modal-title"><i class="fas fa-door-open"></i> اختر القسم</h2>
+            <div id="serviceChoiceModalBody"></div>
+        </div>
+    </div>
+
+    <!-- ── Add/Edit Servant Modal ── -->
+    <div id="manualEntryModal" class="modal-overlay hidden-view">
+        <div class="modal-content max-w-2xl">
+            <button class="close-modal-btn"><i class="fas fa-times"></i></button>
+            <h2 id="manualEntryModalTitle" class="modal-title"><i class="fas fa-user-plus"></i> إضافة خادم</h2>
+            <form id="manualEntryForm">
+                <input type="hidden" id="servantId">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label">الاسم *</label>
+                        <input type="text" id="servantName" class="form-input" required placeholder="الاسم الكامل">
+                    </div>
+                    <div class="form-group hidden-view" id="adminServiceSelectionGroup">
+                        <label class="form-label">الخدمة الأساسية *</label>
+                        <select id="servantService" name="servantService" class="form-input form-select"></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الفصل (اختياري)</label>
+                        <input type="text" id="servantChapter" name="servantChapter" class="form-input"
+                            placeholder="اسم الفصل أو المرحلة">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الموبايل</label>
+                        <input type="tel" id="servantMobile" class="form-input" placeholder="01xxxxxxxxx">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">تاريخ الميلاد *</label>
+                        <input type="date" id="servantDob" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الرقم القومي</label>
+                        <input type="text" id="servantNationalId" class="form-input" placeholder="14 رقم"
+                            maxlength="14">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الخدمة الحالية</label>
+                        <input type="text" id="servantCurrentService" class="form-input"
+                            placeholder="مثال: ولاية - كاهن">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الوظيفة</label>
+                        <input type="text" id="servantJob" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">العنوان</label>
+                        <input type="text" id="servantAddress" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">المؤهل الدراسي</label>
+                        <input type="text" id="servantQualification" class="form-input">
+                    </div>
+                    <div class="form-group col-span-full">
+                        <label class="form-label">أب الاعتراف</label>
+                        <input type="text" id="servantConfessionFather" class="form-input">
+                    </div>
+                    <!-- Image -->
+                    <div class="form-group col-span-full">
+                        <label class="form-label">الصورة الشخصية</label>
+                        <input type="file" id="servantImageFile" accept="image/*" class="form-input p-2">
+                        <img id="imagePreview" src="" alt="Preview"
+                            class="hidden mt-2 w-24 h-24 rounded-full object-cover shadow">
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-6 justify-end">
+                    <button type="button" class="close-modal-btn-inline btn btn-ghost"
+                        onclick="document.getElementById('manualEntryModal').classList.add('hidden-view'); document.getElementById('manualEntryModal').classList.remove('flex')">
+                        إلغاء
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> حفظ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── Import Excel Modal ── -->
+    <div id="importModal" class="modal-overlay hidden-view">
+        <div class="modal-content max-w-md">
+            <button class="close-modal-btn"><i class="fas fa-times"></i></button>
+            <h2 class="modal-title"><i class="fas fa-file-excel text-green-500"></i> استيراد من Excel</h2>
+            <p
+                class="text-sm text-slate-500 mb-4 p-3 bg-amber-50 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-700">
+                <i class="fas fa-info-circle text-amber-500 ml-1"></i>
+                يُقرأ الملف من السطر الخامس. الأعمدة: الاسم، الموبايل، تاريخ الميلاد، الرقم القومي، الفصل.
+            </p>
+            <form id="importForm">
+                <input type="file" id="excelFile" accept=".xlsx,.xls" class="form-input p-2 mb-4" required>
+                <div class="flex gap-2 mt-2">
+                    <button type="button"
+                        class="btn bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 w-full hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                        onclick="window.downloadExcelTemplate()">
+                        <i class="fas fa-download mx-1"></i> تحميل القالب
+                    </button>
+                    <button type="submit" class="btn btn-primary w-full">
+                        <i class="fas fa-file-import mx-1"></i> استيراد
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── Calendar Event Modal ── -->
+    <div id="calendarEventModal" class="modal-overlay hidden-view">
+        <div class="modal-content max-w-md">
+            <button class="close-modal-btn"><i class="fas fa-times"></i></button>
+            <h2 class="modal-title"><i class="fas fa-calendar-plus"></i> حدث بتاريخ: <span id="eventModalDate"
+                    class="text-slate-600 dark:text-slate-300"></span></h2>
+            <form id="calendarEventForm">
+                <input type="hidden" id="eventDate">
+                <div class="form-group">
+                    <label class="form-label">نوع الحدث</label>
+                    <select id="eventTypeSelector" class="form-input form-select" required>
+                        <option value="">-- اختر --</option>
+                        <option>رحلة دينية</option>
+                        <option>رحلة ترفيهية</option>
+                        <option>يوم رياضي</option>
+                        <option>يوم روحي</option>
+                        <option>اجتماع خدام</option>
+                        <option>حفلة</option>
+                        <option>ندوة</option>
+                        <option>أخرى</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">تفاصيل</label>
+                    <textarea id="eventDetailsInput" class="form-input w-full h-24 resize-none"
+                        placeholder="وصف الحدث..."></textarea>
+                </div>
+                <div class="flex gap-2 justify-between">
+                    <button type="button" id="deleteEventBtn" class="btn btn-danger hidden-view">
+                        <i class="fas fa-trash"></i> حذف
+                    </button>
+                    <button type="submit" id="saveEventBtn" class="btn btn-primary mr-auto">
+                        <i class="fas fa-save"></i> حفظ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── Servant Profile Modal ── -->
+    <div id="unifiedProfileModal" class="modal-overlay hidden-view">
+        <div class="modal-content max-w-2xl">
+            <button class="close-modal-btn"><i class="fas fa-times"></i></button>
+            <h2 id="unifiedProfileModalTitle" class="modal-title"><i class="fas fa-user-circle"></i> ملف الخادم</h2>
+            <div id="unifiedProfileModalBody"></div>
+        </div>
+    </div>
+
+    <!-- ── Confirm Modal ── -->
+    <div id="confirmModal" class="modal-overlay hidden-view">
+        <div class="modal-content max-w-sm">
+            <h2 id="confirmModalTitle" class="modal-title"><i class="fas fa-exclamation-triangle text-amber-500"></i>
+                تأكيد</h2>
+            <p id="confirmModalBody" class="text-slate-600 dark:text-slate-300 mb-6"></p>
+            <div class="flex gap-3 justify-end">
+                <button id="confirmModalCancelBtn" class="btn btn-ghost">إلغاء</button>
+                <button id="confirmModalConfirmBtn" class="btn btn-danger">تأكيد</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Settings Modal ── -->
+    <div id="settingsModal" class="modal-overlay hidden-view">
+        <div class="modal-content max-w-md">
+            <button class="close-modal-btn"><i class="fas fa-times"></i></button>
+            <h2 class="modal-title"><i class="fas fa-cog"></i> الإعدادات</h2>
+            <form id="settingsForm">
+                <div
+                    class="p-4 bg-teal-50 dark:bg-teal-900/30 rounded-xl border border-teal-200 dark:border-teal-700 mb-4">
+                    <h3 class="font-bold text-teal-700 dark:text-teal-300 mb-2 flex items-center gap-2">
+                        <i class="fas fa-robot"></i> مفتاح Google Gemini AI
+                    </h3>
+                    <p class="text-xs text-teal-600 dark:text-teal-400 mb-3">
+                        يُحفظ المفتاح مشفراً على السيرفر — المستخدمون لا يرون المفتاح مباشرة.
+                    </p>
+                    <input type="password" id="geminiApiKeyInput" class="form-input w-full" placeholder="AIza...">
+                    <p class="text-xs text-slate-400 mt-2">
+                        احصل على مفتاحك مجاناً من
+                        <a href="https://makersuite.google.com/app/apikey" target="_blank"
+                            class="text-teal-500 underline">Google AI Studio</a>
+                    </p>
+                </div>
+                <button type="submit" class="btn btn-primary w-full">
+                    <i class="fas fa-save"></i> حفظ الإعدادات
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── Activity Attendees Modal ── -->
+    <div id="activityAttendeesModal" class="modal-overlay hidden-view">
+        <div class="modal-content max-w-md">
+            <button class="close-modal-btn"><i class="fas fa-times"></i></button>
+            <h2 id="activityAttendeesModalTitle" class="modal-title"></h2>
+            <div id="activityAttendeesModalBody"></div>
+        </div>
+    </div>
+
+    <!-- ── AI Greeting Modal ── -->
+    <div id="aiGreetingModal" class="modal-overlay hidden-view">
+        <div
+            class="modal-content max-w-md bg-gradient-to-br from-white to-teal-50 dark:from-slate-900 dark:to-teal-900/10">
+            <button class="close-modal-btn"><i class="fas fa-times"></i></button>
+            <h2 class="modal-title flex items-center gap-2">
+                <i class="fas fa-magic text-teal-500"></i> تهنئة روحية (AI)
+            </h2>
+            <div id="aiGreetingModalBody" class="min-h-[150px] flex flex-col items-center justify-center">
+                <!-- Content will be injected here -->
+            </div>
+            <div id="aiGreetingActions" class="mt-6 flex gap-3 border-t dark:border-slate-700 pt-4 hidden-view">
+                <button id="copyGreetingBtn" class="btn btn-ghost flex-1 gap-2">
+                    <i class="fas fa-copy"></i> نسخ
+                </button>
+                <button id="whatsappGreetingBtn" class="btn bg-green-500 hover:bg-green-600 text-white flex-1 gap-2">
+                    <i class="fab fa-whatsapp"></i> واتساب
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════════════════════════════ -->
+    <script type="module" src="src/app.js"></script>
+
+    <!-- Show loading on start -->
+    <script>
+        document.getElementById('loadingOverlay').classList.remove('hidden-view');
+        document.getElementById('loadingOverlay').classList.add('flex');
+    </script>
+
+</body>
+
+</html>
