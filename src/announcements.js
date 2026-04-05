@@ -309,11 +309,14 @@ export async function markNotesAsRead() {
     if (AppState.isLocalMode || !AppState.isGeneralSecretaryMode) return;
     const unread = AppState.unreadNotes.filter(n => !n.isRead);
     if (!unread.length) return;
+
+    // Optimistic UI Update
+    updateBadge(DOM.correspondenceBadge, 0);
+    updateAdminBadge(0);
+
     await Promise.all(unread.map(n =>
         updateDoc(doc(AppState.db, 'notesToAdmin', n.id), { isRead: true })
     ));
-    updateBadge(DOM.correspondenceBadge, 0);
-    updateAdminBadge(0);
 }
 
 // ─── Update Service Card Badges (for main page) ────────────────────

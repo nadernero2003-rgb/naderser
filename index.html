@@ -142,13 +142,13 @@
                 <div class="w-8"></div>
             </header>
 
-            <!-- Content Area -->
-            <div id="contentArea">
+            <!-- Content Area (Fixed height, no internal scrolling) -->
+            <div id="contentArea" class="flex-1 p-6 h-full overflow-hidden relative">
 
                 <!-- ════════════════════════════════════════════════════════════
      HOME PAGE
 ════════════════════════════════════════════════════════════ -->
-                <section id="homePage" class="page-content hidden-view">
+                <section id="homePage" class="page-content hidden-view overflow-y-auto">
                     <div class="page-header">
                         <h1 class="page-title"><i class="fas fa-home"></i> لوحة المعلومات</h1>
                         <div class="flex gap-2">
@@ -170,7 +170,7 @@
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                             <!-- Total Servants (Hidden in Admin mode) -->
                             <div id="totalServantsCard"
-                                class="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg flex items-center justify-between cursor-pointer transition-transform hover:scale-105">
+                                class="lg:col-span-2 card dark:bg-slate-800 dark:border-slate-700 p-6 rounded-xl shadow-lg flex items-center justify-between cursor-pointer transition-transform hover:scale-105">
                                 <div>
                                     <p class="text-slate-500 dark:text-slate-400 text-sm font-bold mb-1">إجمالي الخدام
                                     </p>
@@ -183,7 +183,7 @@
                             </div>
 
                             <!-- Birthdays -->
-                            <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg flex flex-col">
+                            <div class="card dark:bg-slate-800 dark:border-slate-700 p-6 rounded-xl shadow-lg flex flex-col">
                                 <h3 class="font-bold text-pink-600 dark:text-pink-400 mb-2 text-lg flex-shrink-0">أعياد
                                     ميلاد قادمة</h3>
                                 <div id="upcomingBirthdayStat" class="overflow-y-auto flex-grow"
@@ -191,7 +191,7 @@
                             </div>
 
                             <!-- Last Friday Absences (with names) -->
-                            <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg flex flex-col">
+                            <div class="card dark:bg-slate-800 dark:border-slate-700 p-6 rounded-xl shadow-lg flex flex-col">
                                 <div
                                     class="flex justify-between items-baseline mb-4 border-b dark:border-slate-700 pb-2">
                                     <h3 class="font-bold text-red-600 dark:text-red-400 text-lg">غياب الجمعة الماضية
@@ -207,7 +207,7 @@
                         </div>
 
                         <!-- Activity Status Cards (colored, clickable) -->
-                        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg mb-6">
+                        <div class="card bg-white dark:bg-slate-800 dark:border-slate-700 p-6 rounded-xl shadow-lg mb-6">
                             <h3 class="font-bold text-teal-600 dark:text-teal-400 mb-2 text-lg">حالة تسجيل أنشطة الجمعة
                                 الماضية</h3>
                             <div id="lastFridayStatusContainer"
@@ -216,14 +216,14 @@
 
                         <!-- Charts + Quick Actions -->
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
+                            <div class="lg:col-span-2 card bg-white dark:bg-slate-800 dark:border-slate-700 p-6 rounded-xl shadow-lg">
                                 <h2 class="text-xl font-bold mb-4">متوسط الحضور (آخر 30 يوم)</h2>
                                 <div class="relative h-80">
                                     <canvas id="homeAttendanceChart"></canvas>
                                 </div>
                             </div>
                             <div class="space-y-6">
-                                <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
+                                <div class="card bg-white dark:bg-slate-800 dark:border-slate-700 p-6 rounded-xl shadow-lg">
                                     <h2 class="text-xl font-bold mb-4">إجراءات سريعة</h2>
                                     <div class="space-y-3">
                                         <button id="quickAddServant"
@@ -237,7 +237,7 @@
                                     </div>
                                 </div>
                                 <div id="backupRestoreSection"
-                                    class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
+                                    class="card bg-white dark:bg-slate-800 dark:border-slate-700 p-6 rounded-xl shadow-lg">
                                     <h2 class="text-xl font-bold mb-4">النسخ الاحتياطي</h2>
                                     <div class="flex flex-col md:flex-row gap-3">
                                         <button id="backupBtn"
@@ -280,7 +280,7 @@
                 <!-- ════════════════════════════════════════════════════════════
      SERVANTS PAGE
 ════════════════════════════════════════════════════════════ -->
-                <section id="servantsPage" class="page-content hidden-view">
+                <section id="servantsPage" class="page-content hidden-view overflow-y-auto">
                     <div class="page-header">
                         <h1 class="page-title"><i class="fas fa-users"></i> الخدام</h1>
                         <div class="flex flex-wrap gap-2">
@@ -304,13 +304,13 @@
 
                     <!-- Search & Filters -->
                     <div class="card mb-4 flex flex-col md:flex-row gap-4">
-                        <div id="serviceFilterGroup" class="hidden-view flex-grow md:w-1/3">
+                        <div class="flex-grow">
                             <label class="block text-xs font-bold text-slate-500 mb-1">فلتر الخدمة</label>
                             <div class="flex items-center gap-2">
                                 <select id="servantServiceFilter" class="form-input form-select w-full">
                                     <option value="">كل الخدمات</option>
                                 </select>
-                                <span id="servantFilterCount" class="bg-teal-100 text-teal-800 text-xs px-2 py-1 flex-shrink-0 font-bold rounded"></span>
+                                <span id="servantFilterCount" class="bg-teal-100 dark:bg-teal-900 text-teal-800 dark:text-teal-200 text-xs px-2 py-1 flex-shrink-0 font-bold rounded"></span>
                             </div>
                         </div>
                         <div class="flex-grow">
@@ -328,94 +328,100 @@
                 <!-- ════════════════════════════════════════════════════════════
      ATTENDANCE PAGE
 ════════════════════════════════════════════════════════════ -->
-                <section id="attendancePage" class="page-content hidden-view">
-                    <h1 class="page-title mb-6"><i class="fas fa-calendar-check"></i> تسجيل الحضور</h1>
+                <section id="attendancePage" class="page-content hidden-view h-full max-h-full overflow-hidden flex flex-col">
+                    <!-- Fixed Header (Flex None) -->
+                    <div class="flex-none bg-[#f1f5f9] dark:bg-[#0f172a] pb-2 -mx-6 px-6 pt-2 border-b dark:border-slate-800 shadow-sm">
+                        <h1 class="page-title mb-6"><i class="fas fa-calendar-check"></i> تسجيل الحضور</h1>
 
-                    <!-- Year/Month selectors (Professional Filter) -->
-                    <div class="card mb-6 overflow-hidden border-teal-100 dark:border-teal-900 shadow-teal-500/5">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="relative">
-                                <label class="form-label mb-2 flex items-center gap-2">
-                                    <i class="fas fa-calendar-alt text-teal-600"></i> السنة
-                                </label>
-                                <div class="relative group">
-                                    <select id="yearSelector"
-                                        class="form-input form-select pr-10 font-bold transition-shadow hover:shadow-sm">
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="relative">
-                                <label class="form-label mb-2 flex items-center gap-2">
-                                    <i class="fas fa-calendar-day text-teal-600"></i> الشهر
-                                </label>
-                                <div class="relative group">
-                                    <select id="monthSelector"
-                                        class="form-input form-select pr-10 disabled:opacity-50 transition-shadow hover:shadow-sm"
-                                        disabled>
-                                        <option value="">-- اختــر الشهــر --</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Fridays Grid -->
-                    <div class="card mb-6">
-                        <h3 class="font-bold mb-4 text-slate-700 dark:text-slate-200 flex items-center gap-2">
-                            <i class="fas fa-calendar-day text-teal-500"></i> جُمع الشهر
-                        </h3>
-                        <div id="fridaysGrid" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2"></div>
-                    </div>
-
-                    <!-- Activity Buttons -->
-                    <div id="activityButtons" class="hidden-view grid grid-cols-3 md:grid-cols-6 gap-2 mb-6"></div>
-
-                    <!-- Servants Checklist -->
-                    <div id="attendanceListContainer" class="hidden-view card">
-                        <h3 id="attendanceListTitle" class="font-bold text-lg mb-4 text-teal-600 dark:text-teal-400">
-                        </h3>
-
-                        <!-- No-activity and Special-day section -->
-                        <div id="noActivitySection" class="mb-4 p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border dark:border-slate-700 space-y-4">
-                            <!-- Option 1: Negligence (unrecorded) -->
-                            <div class="flex items-start gap-3 p-2 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors border border-transparent hover:border-amber-100 dark:hover:border-amber-800">
-                                <input type="checkbox" id="noActivityCheck" class="w-5 h-5 mt-0.5 rounded text-amber-500 cursor-pointer">
-                                <label for="noActivityCheck" class="cursor-pointer">
-                                    <span class="block font-black text-amber-800 dark:text-amber-200">لا يوجد نشاط (تقصير)</span>
-                                    <span class="block text-[10px] text-amber-600/70 dark:text-amber-400/50">سيتم احتساب هذا اليوم بنسبة 0% حضور (يؤثر على النسب).</span>
-                                </label>
-                            </div>
-
-                            <!-- Divider line -->
-                            <div class="border-t dark:border-slate-800 opacity-50"></div>
-
-                            <!-- Option 2: Special Case (Excluded) -->
-                            <div class="flex flex-col gap-3 p-2 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-colors border border-transparent hover:border-purple-100 dark:hover:border-purple-800">
-                                <label class="flex items-start gap-3 cursor-pointer">
-                                    <input type="checkbox" id="isSpecialCheck" class="w-5 h-5 mt-0.5 rounded text-purple-500 cursor-pointer">
-                                    <div class="flex-grow">
-                                        <span class="block font-black text-purple-800 dark:text-purple-200">يوم استثنائي (ندوة/رحلة/حفلة)</span>
-                                        <span class="block text-[10px] text-purple-600/70 dark:text-purple-400/50">لن يتم احتساب هذا النشاط لهذا اليوم (لا يؤثر على النسب).</span>
+                        <!-- Year/Month selectors (Professional Filter) -->
+                        <div class="card mb-6 overflow-hidden border-teal-100 dark:border-teal-900 shadow-teal-500/5">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="relative">
+                                    <label class="form-label mb-2 flex items-center gap-2">
+                                        <i class="fas fa-calendar-alt text-teal-600"></i> السنة
+                                    </label>
+                                    <div class="relative group">
+                                        <select id="yearSelector"
+                                            class="form-input form-select pr-10 font-bold transition-shadow hover:shadow-sm">
+                                        </select>
                                     </div>
-                                </label>
-                                <input id="specialReasonInput" type="text" placeholder="اكتب السبب الإستثنائي... (مثلاً: ندوة أب كاهن)"
-                                    class="form-input text-sm p-3 rounded-xl border-purple-200 dark:border-purple-800 bg-white dark:bg-slate-800 focus:ring-purple-400 hidden-view">
+                                </div>
+                                <div class="relative">
+                                    <label class="form-label mb-2 flex items-center gap-2">
+                                        <i class="fas fa-calendar-day text-teal-600"></i> الشهر
+                                    </label>
+                                    <div class="relative group">
+                                        <select id="monthSelector"
+                                            class="form-input form-select pr-10 disabled:opacity-50 transition-shadow hover:shadow-sm"
+                                            disabled>
+                                            <option value="">-- اختــر الشهــر --</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div id="servantsChecklist" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 mb-4">
+                        <!-- Fridays Grid -->
+                        <div class="card mb-2">
+                            <h3 class="font-bold mb-4 text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                                <i class="fas fa-calendar-day text-teal-500"></i> جُمع الشهر
+                            </h3>
+                            <div id="fridaysGrid" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2"></div>
                         </div>
+                    </div>
 
-                        <button id="saveActivityAttendanceBtn" class="btn btn-primary w-full md:w-auto">
-                            <i class="fas fa-save"></i> حفظ الحضور
-                        </button>
+                    <!-- Scrollable Body (Flex 1) -->
+                    <div class="flex-1 overflow-y-auto -mx-6 px-6 pt-4 custom-scrollbar">
+                        <!-- Activity Buttons -->
+                        <div id="activityButtons" class="hidden-view grid grid-cols-3 md:grid-cols-6 gap-2 mb-6"></div>
+
+                        <!-- Servants Checklist -->
+                        <div id="attendanceListContainer" class="hidden-view card mb-20">
+                            <h3 id="attendanceListTitle" class="font-bold text-lg mb-4 text-teal-600 dark:text-teal-400">
+                            </h3>
+
+                            <!-- No-activity and Special-day section -->
+                            <div id="noActivitySection" class="mb-4 p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border dark:border-slate-700 space-y-4">
+                                <!-- Option 1: Negligence (unrecorded) -->
+                                <div class="flex items-start gap-3 p-2 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors border border-transparent hover:border-amber-100 dark:hover:border-amber-800">
+                                    <input type="checkbox" id="noActivityCheck" class="w-5 h-5 mt-0.5 rounded text-amber-500 cursor-pointer">
+                                    <label for="noActivityCheck" class="cursor-pointer">
+                                        <span class="block font-black text-amber-800 dark:text-amber-200">لا يوجد نشاط (تقصير)</span>
+                                        <span class="block text-[10px] text-amber-600/70 dark:text-amber-400/50">سيتم احتساب هذا اليوم بنسبة 0% حضور (يؤثر على النسب).</span>
+                                    </label>
+                                </div>
+
+                                <!-- Divider line -->
+                                <div class="border-t dark:border-slate-800 opacity-50"></div>
+
+                                <!-- Option 2: Special Case (Excluded) -->
+                                <div class="flex flex-col gap-3 p-2 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-colors border border-transparent hover:border-purple-100 dark:hover:border-purple-800">
+                                    <label class="flex items-start gap-3 cursor-pointer">
+                                        <input type="checkbox" id="isSpecialCheck" class="w-5 h-5 mt-0.5 rounded text-purple-500 cursor-pointer">
+                                        <div class="flex-grow">
+                                            <span class="block font-black text-purple-800 dark:text-purple-200">يوم استثنائي (ندوة/رحلة/حفلة)</span>
+                                            <span class="block text-[10px] text-purple-600/70 dark:text-purple-400/50">لن يتم احتساب هذا النشاط لهذا اليوم (لا يؤثر على النسب).</span>
+                                        </div>
+                                    </label>
+                                    <input id="specialReasonInput" type="text" placeholder="اكتب السبب الإستثنائي... (مثلاً: ندوة أب كاهن)"
+                                        class="form-input text-sm p-3 rounded-xl border-purple-200 dark:border-purple-800 bg-white dark:bg-slate-800 focus:ring-purple-400 hidden-view">
+                                </div>
+                            </div>
+
+                            <div id="servantsChecklist" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 mb-4">
+                            </div>
+
+                            <button id="saveActivityAttendanceBtn" class="btn btn-primary w-full md:w-auto">
+                                <i class="fas fa-save"></i> حفظ الحضور
+                            </button>
+                        </div>
                     </div>
                 </section>
 
                 <!-- ════════════════════════════════════════════════════════════
      REPORTS PAGE
 ════════════════════════════════════════════════════════════ -->
-                <section id="reportsPage" class="page-content hidden-view">
+                <section id="reportsPage" class="page-content hidden-view overflow-y-auto">
                     <h1 class="page-title mb-6"><i class="fas fa-chart-bar"></i> التقارير</h1>
 
                     <!-- Report Tabs -->
@@ -640,7 +646,7 @@
                     <div id="activityRegistrationGridContainer" class="mb-6"></div>
 
                     <!-- ═══════════ قسم: خدام بحاجة للمتابعة ═══════════ -->
-                    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden">
+                    <div class="card bg-white dark:bg-slate-800 dark:border-slate-700 rounded-2xl shadow-lg overflow-hidden">
                         <div class="px-8 py-6 border-b border-slate-100 dark:border-slate-700">
                             <h2 class="font-black text-2xl text-right text-slate-800 dark:text-slate-200">خدام بحاجة للمتابعة</h2>
                         </div>
@@ -654,7 +660,7 @@
                                     <div class="flex flex-col min-w-[100px]">
                                         <label class="text-[10px] font-black uppercase tracking-widest mb-1.5 text-slate-400 block px-1">السنة</label>
                                         <select id="absenceFilterYearSelector"
-                                            class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 p-2.5 rounded-xl text-sm font-bold outline-none transition-all shadow-sm cursor-pointer text-center">
+                                            class="w-full card bg-white dark:bg-slate-800 dark:border-slate-700 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 p-2.5 rounded-xl text-sm font-bold outline-none transition-all shadow-sm cursor-pointer text-center">
                                         </select>
                                     </div>
                                     
@@ -670,7 +676,7 @@
                                             <i class="fas fa-chevron-down text-[10px] text-slate-400"></i>
                                         </button>
                                         <div id="monthFilterDropdown"
-                                            class="absolute top-full mt-2 w-64 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-2xl shadow-2xl p-3 z-[60] hidden-view animate-in zoom-in-95 duration-200 max-h-80 overflow-y-auto custom-scrollbar ring-8 ring-black/5">
+                                            class="absolute top-full mt-2 w-64 bg-white dark:bg-slate-800 border-2 border-teal-500/20 dark:border-teal-400/20 rounded-2xl shadow-2xl p-3 z-[60] hidden-view animate-in zoom-in-95 duration-200 max-h-80 overflow-y-auto custom-scrollbar ring-8 ring-black/5">
                                         </div>
                                     </div>
                                 </div>
@@ -723,7 +729,7 @@
 
     <!-- ── Password Modal ── -->
     <div id="passwordModal" class="modal-overlay hidden-view">
-        <div class="modal-content max-w-md">
+        <div class="modal-content max-w-md bg-white dark:bg-slate-800 dark:border-slate-700">
             <button class="close-modal-btn"><i class="fas fa-times"></i></button>
             <h2 class="modal-title"><i class="fas fa-lock"></i> الدخول</h2>
             <p class="text-slate-500 text-sm mb-4">
@@ -750,7 +756,7 @@
 
     <!-- ── Add/Edit Servant Modal ── -->
     <div id="manualEntryModal" class="modal-overlay hidden-view">
-        <div class="modal-content max-w-2xl">
+        <div class="modal-content max-w-2xl bg-white dark:bg-slate-800 dark:border-slate-700">
             <button class="close-modal-btn"><i class="fas fa-times"></i></button>
             <h2 id="manualEntryModalTitle" class="modal-title"><i class="fas fa-user-plus"></i> إضافة خادم</h2>
             <form id="manualEntryForm">
@@ -826,7 +832,7 @@
 
     <!-- ── Import Excel Modal ── -->
     <div id="importModal" class="modal-overlay hidden-view">
-        <div class="modal-content max-w-md">
+        <div class="modal-content max-w-md bg-white dark:bg-slate-800 dark:border-slate-700">
             <button class="close-modal-btn"><i class="fas fa-times"></i></button>
             <h2 class="modal-title"><i class="fas fa-file-excel text-green-500"></i> استيراد من Excel</h2>
             <p
@@ -852,7 +858,7 @@
 
     <!-- ── Calendar Event Modal ── -->
     <div id="calendarEventModal" class="modal-overlay hidden-view">
-        <div class="modal-content max-w-md">
+        <div class="modal-content max-w-md bg-white dark:bg-slate-800 dark:border-slate-700">
             <button class="close-modal-btn"><i class="fas fa-times"></i></button>
             <h2 class="modal-title"><i class="fas fa-calendar-plus"></i> حدث بتاريخ: <span id="eventModalDate"
                     class="text-slate-600 dark:text-slate-300"></span></h2>
@@ -891,7 +897,7 @@
 
     <!-- ── Servant Profile Modal ── -->
     <div id="unifiedProfileModal" class="modal-overlay hidden-view">
-        <div class="modal-content max-w-2xl">
+        <div class="modal-content max-w-2xl bg-white dark:bg-slate-800 dark:border-slate-700">
             <button class="close-modal-btn"><i class="fas fa-times"></i></button>
             <h2 id="unifiedProfileModalTitle" class="modal-title"><i class="fas fa-user-circle"></i> ملف الخادم</h2>
             <div id="unifiedProfileModalBody"></div>
@@ -900,7 +906,7 @@
 
     <!-- ── Confirm Modal ── -->
     <div id="confirmModal" class="modal-overlay hidden-view">
-        <div class="modal-content max-w-sm">
+        <div class="modal-content max-w-sm bg-white dark:bg-slate-800 dark:border-slate-700">
             <h2 id="confirmModalTitle" class="modal-title"><i class="fas fa-exclamation-triangle text-amber-500"></i>
                 تأكيد</h2>
             <p id="confirmModalBody" class="text-slate-600 dark:text-slate-300 mb-6"></p>
@@ -913,7 +919,7 @@
 
     <!-- ── Settings Modal ── -->
     <div id="settingsModal" class="modal-overlay hidden-view">
-        <div class="modal-content max-w-md">
+        <div class="modal-content max-w-md bg-white dark:bg-slate-800 dark:border-slate-700">
             <button class="close-modal-btn"><i class="fas fa-times"></i></button>
             <h2 class="modal-title"><i class="fas fa-cog"></i> الإعدادات</h2>
             <form id="settingsForm">
@@ -941,7 +947,7 @@
 
     <!-- ── Activity Attendees Modal ── -->
     <div id="activityAttendeesModal" class="modal-overlay hidden-view">
-        <div class="modal-content max-w-md">
+        <div class="modal-content max-w-md bg-white dark:bg-slate-800 dark:border-slate-700">
             <button class="close-modal-btn"><i class="fas fa-times"></i></button>
             <h2 id="activityAttendeesModalTitle" class="modal-title"></h2>
             <div id="activityAttendeesModalBody"></div>

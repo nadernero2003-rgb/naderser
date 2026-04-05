@@ -171,7 +171,7 @@ function renderServiceKpis(servants, upcoming) {
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                 let dayStr = diffDays === 0 ? "اليوم! 🎉" : `بعد ${diffDays} يوم`;
 
-                return `<li class="flex justify-between items-center text-sm p-3 bg-pink-50 dark:bg-pink-900/20 rounded-lg shadow-sm">
+                return `<li class="flex justify-between items-center text-sm p-3 bg-pink-50 dark:bg-pink-900/20 rounded-lg shadow-sm border border-transparent dark:border-pink-800/30">
                         <div class="flex items-center gap-3">
                             <i class="fas fa-birthday-cake text-pink-500"></i>
                             <span class="font-bold text-slate-800 dark:text-slate-200">${s.name}</span>
@@ -274,7 +274,7 @@ function renderLastFridayDetails(servants, attendanceCache) {
 
     if (absenceList) {
         if (serviceCancelledReason) {
-            absenceList.innerHTML = `<div class="w-full text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 p-4 rounded-lg flex items-center justify-center font-bold shadow-sm text-center">
+            absenceList.innerHTML = `<div class="w-full text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 p-4 rounded-lg flex items-center justify-center font-bold shadow-sm text-center">
                 <i class="fas fa-info-circle ml-2 text-xl"></i>
                 <p>لم تقم الخدمة: ${serviceCancelledReason}</p>
             </div>`;
@@ -327,7 +327,7 @@ function renderLastFridayDetails(servants, attendanceCache) {
                     }
 
                     return `
-                                <div class="flex items-center gap-2 p-2 rounded-lg transition-all ${bgClass} border border-transparent hover:border-slate-300 dark:hover:border-slate-600">
+                                <div class="flex items-center gap-2 p-2 rounded-lg transition-all ${bgClass} border border-transparent hover:border-slate-300 dark:hover:border-slate-500 shadow-sm">
                                     <i class="fas ${iconClass} w-4 text-center text-xs"></i>
                                     <span class="font-bold text-xs truncate">${s.name}</span>
                                     ${badge}
@@ -348,10 +348,10 @@ function renderLastFridayDetails(servants, attendanceCache) {
 
             if (!actData) {
                 statusHtml = `<div class="mt-2 text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/40 px-3 py-1 rounded-full flex items-center justify-center"><i class="fas fa-times mx-1"></i> لم يسجل</div>`;
-                cardStyle = 'border: 1px solid #fca5a5; background-color: #fff;';
+                cardStyle = 'border: 1px solid #fca5a5;';
             } else if (actData.note != null) {
                 statusHtml = `<div class="mt-2 text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/40 px-3 py-1 rounded-full flex items-center justify-center"><i class="fas fa-ban mx-1"></i> ملغى</div>`;
-                cardStyle = 'border: 1px dashed #fcd34d; background-color: #fff;';
+                cardStyle = 'border: 1px dashed #fcd34d;';
             } else {
                 const cnt = actData.attendees?.length || 0;
                 // Add click handler for modal
@@ -367,14 +367,18 @@ function renderLastFridayDetails(servants, attendanceCache) {
                         <i class="fas fa-check mx-1"></i> ${cnt} / ${total}
                     </div>`;
                 }
-                cardStyle = 'border: 1px solid #86efac; background-color: #f0fdf4;';
+                cardStyle = 'border: 1px solid #86efac;';
             }
 
-            // Provide dark mode fallbacks for inline styles using Tailwind classes handled by app
-            const darkBg = actData && actData.note == null ? 'dark:bg-slate-800 dark:border-green-800' : (actData?.note != null ? 'dark:bg-slate-800 dark:border-amber-800' : 'dark:bg-slate-800 dark:border-red-900');
+            // Provide dark mode fallbacks for dynamic cards
+            const bgClass = actData && actData.note == null 
+                ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800/40' 
+                : (actData?.note != null 
+                    ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/40' 
+                    : 'bg-white dark:bg-slate-800 dark:border-slate-700');
 
             return `
-            <div ${clickAction} style="${cardStyle}" class="flex flex-col items-center justify-center p-4 rounded-xl text-center cursor-pointer hover:shadow-md hover:-translate-y-1 transition-all ${darkBg}">
+            <div ${clickAction} style="${cardStyle}" class="flex flex-col items-center justify-center p-4 rounded-xl text-center cursor-pointer hover:shadow-md hover:-translate-y-1 transition-all ${bgClass}">
                 <div class="w-12 h-12 rounded-full flex items-center justify-center mb-2 shadow-sm" style="background-color: ${act.border}; color: white;">
                     <i class="fas ${act.icon} text-xl"></i>
                 </div>
@@ -560,11 +564,11 @@ export function renderAdminDashboard() {
 }
 
 export function renderAdminServantsTable(servants) {
-    const tbody = DOM.adminServantsTableBody;
-    if (!tbody) return;
+    const container = DOM.adminServantsTableBody;
+    if (!container) return;
 
     const src = servants.slice(0, 100); // Limit for performance
-    tbody.innerHTML = src.map(s => {
+    const rows = src.map(s => {
         const val = v => v || '-';
         return `<tr onclick="openServantProfile('${s.id}')" class="border-b dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors text-sm cursor-pointer">
             <td class="p-3 font-semibold text-teal-700 dark:text-teal-400">${val(s.name)}</td>
@@ -575,6 +579,24 @@ export function renderAdminServantsTable(servants) {
             <td class="p-3">${val(s.dob)}</td>
         </tr>`;
     }).join('') || `<tr><td colspan="4" class="text-center p-8 text-slate-400">لا يوجد بيانات.</td></tr>`;
+
+    container.innerHTML = `
+        <div class="w-full overflow-x-auto">
+            <table class="w-full text-right border-collapse whitespace-nowrap">
+                <thead>
+                    <tr class="bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
+                        <th class="p-3">الاسم</th>
+                        <th class="p-3">الخدمة</th>
+                        <th class="p-3">الموبايل</th>
+                        <th class="p-3">تاريخ الميلاد</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows}
+                </tbody>
+            </table>
+        </div>
+    `;
 }
 
 function renderAdminStatsCards(servants, attendance) {

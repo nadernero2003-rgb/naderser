@@ -353,7 +353,38 @@ export async function handleExcelImport(e) {
         const wb = XLSX.read(d, { type: 'array', cellDates: true });
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(ws, { header: 1, range: 4 });
-        const batch = rows.map(r => r[0] ? ({ name: r[0], mobile: r[1] || '', dob: r[2] ? new Date(r[2]).toISOString().split('T')[0] : '', nationalId: r[3] || '', chapter: r[4] || '' }) : null).filter(Boolean);
+        const batch = rows.map(r => {
+            if (!r[0]) return null;
+            let dobParsed = '';
+            if (r[2]) {
+                const val = r[2];
+                if (val instanceof Date && !isNaN(val)) {
+                    dobParsed = `${val.getFullYear()}-${String(val.getMonth() + 1).padStart(2, '0')}-${String(val.getDate()).padStart(2, '0')}`;
+                } else if (typeof val === 'number') {
+                    const parsed = new Date(Math.round((val - 25569) * 86400 * 1000));
+                    if (!isNaN(parsed)) dobParsed = `${parsed.getUTCFullYear()}-${String(parsed.getUTCMonth() + 1).padStart(2, '0')}-${String(parsed.getUTCDate()).padStart(2, '0')}`;
+                } else {
+                    const str = String(val).trim();
+                    const parts = str.split(/[\/\-]/);
+                    if (parts.length === 3) {
+                        // Assuming DD/MM/YYYY
+                        if (parts[2].length === 4) dobParsed = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                        else if (parts[0].length === 4) dobParsed = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+                    }
+                    if (!dobParsed) {
+                        const fallback = new Date(str);
+                        if (!isNaN(fallback)) dobParsed = `${fallback.getFullYear()}-${String(fallback.getMonth() + 1).padStart(2, '0')}-${String(fallback.getDate()).padStart(2, '0')}`;
+                    }
+                }
+            }
+            return {
+                name: String(r[0]).trim(),
+                mobile: r[1] ? String(r[1]).trim() : '',
+                dob: dobParsed,
+                nationalId: r[3] ? String(r[3]).trim() : '',
+                chapter: r[4] ? String(r[4]).trim() : ''
+            };
+        }).filter(Boolean);
         await Promise.all(batch.map(item => addDoc(getServiceCol('servants'), item)));
         showMessage('تم استيراد ' + batch.length + ' خادم بنجاح ✓'); closeModal(DOM.importModal);
     } finally { showLoading(false); }

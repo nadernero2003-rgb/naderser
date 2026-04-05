@@ -172,9 +172,9 @@ export function getServantHistoryStatusForDate(servantId, currentDateStr, attend
     }
     
     if (isExcused) {
-        return { type: 'excused', label: 'معتذر', colorClass: 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-300 text-yellow-800 dark:text-yellow-300', icon: 'fa-bed' };
+        return { type: 'excused', label: 'معتذر', colorClass: 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-700/50 text-yellow-800 dark:text-yellow-300', icon: 'fa-bed' };
     } else if (consecutiveAbsences > 0) {
-        return { type: 'absent', label: `غياب ${consecutiveAbsences} متتالي`, colorClass: 'bg-red-50 dark:bg-red-900/30 border-red-300 text-red-800 dark:text-red-300', icon: 'fa-exclamation-triangle' };
+        return { type: 'absent', label: `غياب ${consecutiveAbsences} متتالي`, colorClass: 'bg-red-50 dark:bg-red-900/30 border-red-300 dark:border-red-700/50 text-red-800 dark:text-red-300', icon: 'fa-exclamation-triangle' };
     }
     return null;
 }
