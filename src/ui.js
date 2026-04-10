@@ -247,15 +247,18 @@ export function getUpcomingBirthdays(servants, daysAhead = 30) {
     const today = new Date();
     today.setHours(0,0,0,0);
     return servants
-        .filter(s => s.dob)
+        .filter(s => s.dob && typeof s.dob === 'string')
         .map(s => {
-            const [y, m, d] = s.dob.split('-').map(Number);
+            const parts = s.dob.split('-');
+            if (parts.length !== 3) return null;
+            const [y, m, d] = parts.map(Number);
+            if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
             let next = new Date(today.getFullYear(), m-1, d);
             if (next < today) next.setFullYear(today.getFullYear() + 1);
             const diff = Math.round((next - today) / 86400000);
             return { ...s, daysUntil: diff, date: `${d}/${m}` };
         })
-        .filter(s => s.daysUntil <= daysAhead)
+        .filter(s => s !== null && s.daysUntil <= daysAhead)
         .sort((a, b) => a.daysUntil - b.daysUntil);
 }
 

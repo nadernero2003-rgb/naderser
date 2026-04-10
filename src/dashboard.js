@@ -161,9 +161,14 @@ function renderServiceKpis(servants, upcoming) {
                 ${upcoming.map(s => {
                 const today = new Date();
                 const bStr = s.dob;
-                if (!bStr) return '';
-                const [yyyy, mm, dd] = bStr.split('-');
-                let nextBday = new Date(today.getFullYear(), parseInt(mm) - 1, parseInt(dd));
+                if (!bStr || typeof bStr !== 'string') return '';
+                const parts = bStr.split('-');
+                if (parts.length !== 3) return '';
+                
+                const [yyyy, mm, dd] = parts.map(Number);
+                if (isNaN(mm) || isNaN(dd)) return '';
+
+                let nextBday = new Date(today.getFullYear(), mm - 1, dd);
                 if (nextBday < today && nextBday.toDateString() !== today.toDateString()) {
                     nextBday.setFullYear(today.getFullYear() + 1);
                 }
