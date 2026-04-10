@@ -21,6 +21,7 @@ export const AppState = {
     allAnnouncementsCache: [],
     calendarEventsCache: {},
     unreadNotes: [],
+    unreadNotesCount: 0,
     unreadAnnouncementsCache: [],
 
     // UI state
@@ -34,7 +35,9 @@ export const AppState = {
     followUpResultsCache: [],
     followUpSearchQuery: '',
     servantsViewMode: 'grid', // 'grid' | 'table'
+    followUpViewMode: 'grid', // 'grid' | 'table'
     periodCount: 0,
+    pendingImport: [], // Temporary storage for Excel preview
 
     // Subscriptions (unsubscribe functions)
     subscriptions: {
@@ -82,6 +85,7 @@ export const AppState = {
         this.allAnnouncementsCache = [];
         this.calendarEventsCache = {};
         this.unreadNotes = [];
+        this.unreadNotesCount = 0;
         this.unreadAnnouncementsCache = [];
         this.currentActivity = '';
         this.selectedFriday = '';
@@ -90,6 +94,8 @@ export const AppState = {
         this.absenceFilterSelectedMonths = new Set();
         this.absenceFilterSelectedActivity = null;
         this.periodCount = 0;
+        this.pendingImport = [];
+        this.followUpViewMode = 'grid';
 
         // Destroy all charts
         Object.keys(this.charts).forEach(key => {

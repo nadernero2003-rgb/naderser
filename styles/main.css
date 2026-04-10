@@ -110,59 +110,11 @@ body.dark {
     }
 }
 
-/* ── Services Grid (Login Screen) ── */
-#loginOrServicesView {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 2rem 1rem;
-}
-
-.app-logo {
-    font-size: 2.5rem;
-    font-weight: 900;
-    color: #fff;
-    margin-bottom: 0.25rem;
-    text-shadow: 0 0 30px rgba(13, 148, 136, 0.5);
-}
-
-.app-subtitle {
-    color: #94a3b8;
-    text-align: center;
-    margin-bottom: 2rem;
-    font-size: 0.9rem;
-}
-
-#servicesGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 1rem;
-    width: 100%;
-    max-width: 720px;
-}
-
-.service-card {
-    position: relative;
-    cursor: pointer;
-    transition: transform var(--transition), box-shadow var(--transition);
-}
-
-.service-card:hover {
-    transform: translateY(-4px);
-}
-
-.service-card:active {
-    transform: scale(0.97);
-}
-
 /* ── Main Dashboard Layout ── */
 #mainDashboard {
     display: flex;
     width: 100%;
-    height: 100%;
+    height: 100vh;
     overflow: hidden;
 }
 
@@ -271,6 +223,7 @@ body.dark {
 /* ── Main Content ── */
 #mainContent {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -313,25 +266,34 @@ body.dark {
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden !important;
-    /* Force parent-level overflow lock */
+    min-height: 0;
+    /* min-height: 0 is the key flex trick — allows flex children to shrink 
+       below their content size so overflow-y: auto on .page-content works */
+    overflow: hidden;
     padding: 1.5rem;
     padding-top: 0.5rem;
-    height: 100%;
 }
 
 .page-content {
     flex: 1;
+    min-height: 0;
     display: none;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-    /* Lock page-level scrolling */
+    overflow-y: auto;
+    overflow-x: hidden;
     animation: fadeIn 0.15s ease-out;
+    padding-bottom: 5rem; /* Protect bottom area */
 }
 
 .page-content:not(.hidden-view) {
+    display: block;
+}
+
+/* Attendance page needs flex layout for its fixed-header + scrollable-body pattern */
+#attendancePage.page-content:not(.hidden-view) {
     display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Parent hides overflow; child div handles scrolling */
+    padding-bottom: 0;
 }
 
 @keyframes fadeIn {
@@ -371,22 +333,33 @@ body.dark {
 
 /* ── Cards ── */
 .card {
-    background-color: #fff;
-    border-radius: var(--radius);
-    border: 1px solid #e2e8f0;
-    padding: 1.25rem;
-    box-shadow: var(--shadow-sm);
-    transition: all var(--transition);
+    background-color: #ffffff;
+    border-radius: 20px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
 }
 
 .card:hover {
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
 }
 
-.dark .card {
-    background-color: #1e293b !important;
-    border-color: #334155 !important;
-    color: #e2e8f0;
+.dark .card,
+.card.dark {
+    background-color: rgba(30, 41, 59, 0.7) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-color: rgba(51, 65, 85, 0.5) !important;
+    color: #f8fafc !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.dark .card:hover,
+.card.dark:hover {
+    box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .stat-card {
@@ -975,4 +948,68 @@ select.profile-nav-select option {
 .profile-nav-select::-webkit-scrollbar-thumb {
     background-color: rgba(255, 255, 255, 0.2);
     border-radius: 10px;
+}
+
+/* ── Follow-up Enhancements ── */
+.follow-up-table-container {
+    overflow-x: auto;
+    border-radius: 20px;
+    background: white;
+    border: 1px solid #e2e8f0;
+}
+
+.dark .follow-up-table-container {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+#absenceFollowUpResults table thead th {
+    background: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.dark #absenceFollowUpResults table thead th {
+    background: #1e293b;
+    border-bottom-color: #334155;
+}
+
+#absenceFollowUpResults table tbody tr {
+    transition: all 0.2s ease;
+}
+
+#absenceFollowUpResults table tbody tr:hover {
+    background-color: #f1f5f9;
+}
+
+.dark #absenceFollowUpResults table tbody tr:hover {
+    background-color: rgba(51, 65, 85, 0.4);
+}
+
+.month-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.month-dropdown-item:hover {
+    background: #f1f5f9;
+}
+
+.dark .month-dropdown-item:hover {
+    background: #334155;
+}
+
+.month-dropdown-item.active {
+    background: #e0f2f1;
+    color: #0d9488;
+}
+
+.dark .month-dropdown-item.active {
+    background: #134e4a;
+    color: #2dd4bf;
 }

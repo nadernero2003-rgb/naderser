@@ -150,9 +150,10 @@ export function getServantHistoryStatusForDate(servantId, currentDateStr, attend
         let excusedThatWeek = (pDayData['apology']?.attendees || []).includes(servantId);
         
         ACTIVITIES.filter(a => a.key !== 'apology').forEach(act => {
-            if (pDayData[act.key] && pDayData[act.key].note == null) {
+            const actData = pDayData[act.key];
+            if (actData && !actData.isSpecial) {
                 anyAttendanceThatWeek = true;
-                if ((pDayData[act.key].attendees || []).includes(servantId)) {
+                if ((actData.attendees || []).includes(servantId)) {
                     attendedThatWeek = true;
                 }
             }
@@ -171,9 +172,9 @@ export function getServantHistoryStatusForDate(servantId, currentDateStr, attend
     }
     
     if (isExcused) {
-        return { type: 'excused', label: 'معتذر', colorClass: 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-300 text-yellow-800 dark:text-yellow-300', icon: 'fa-bed' };
+        return { type: 'excused', label: 'معتذر', colorClass: 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-700/50 text-yellow-800 dark:text-yellow-300', icon: 'fa-bed' };
     } else if (consecutiveAbsences > 0) {
-        return { type: 'absent', label: `غياب ${consecutiveAbsences} متتالي`, colorClass: 'bg-red-50 dark:bg-red-900/30 border-red-300 text-red-800 dark:text-red-300', icon: 'fa-exclamation-triangle' };
+        return { type: 'absent', label: `غياب ${consecutiveAbsences} متتالي`, colorClass: 'bg-red-50 dark:bg-red-900/30 border-red-300 dark:border-red-700/50 text-red-800 dark:text-red-300', icon: 'fa-exclamation-triangle' };
     }
     return null;
 }
@@ -190,16 +191,16 @@ export function renderServantChecklist(activityKey, date) {
 
     DOM.attendanceListTitle.textContent = `${activity.name} — ${formatDateAr(date)}`;
 
-    // No-activity section
+    // No-activity and Special-day section
     const noActSection = DOM.noActivitySection;
     if (activityKey === 'apology') {
         noActSection?.classList.add('hidden-view');
     } else {
         noActSection?.classList.remove('hidden-view');
         DOM.noActivityCheck.checked = false;
-        DOM.noActivityReason.value = '';
-        DOM.noActivityReason?.classList.add('hidden');
-        DOM.noActivityLabel.textContent = `لا يوجد ${activity.name} لهذا اليوم`;
+        DOM.isSpecialCheck.checked = false;
+        DOM.specialReasonInput.value = '';
+        DOM.specialReasonInput?.classList.add('hidden-view');
         DOM.servantsChecklist?.classList.remove('hidden');
     }
 
@@ -208,10 +209,14 @@ export function renderServantChecklist(activityKey, date) {
     const actData = dayData[activityKey] || {};
     const attendees = actData.attendees || [];
 
-    if (actData.note !== undefined && actData.note !== null) {
+    // Reset visibility and exclusive logic
+    if (actData.isSpecial) {
+        DOM.isSpecialCheck.checked = true;
+        DOM.specialReasonInput.value = actData.note || '';
+        DOM.specialReasonInput?.classList.remove('hidden-view');
+        DOM.servantsChecklist?.classList.add('hidden');
+    } else if (actData.note !== undefined && actData.note !== null) {
         DOM.noActivityCheck.checked = true;
-        DOM.noActivityReason.value = actData.note;
-        DOM.noActivityReason?.classList.remove('hidden');
         DOM.servantsChecklist?.classList.add('hidden');
     }
 
@@ -232,6 +237,30 @@ export function renderServantChecklist(activityKey, date) {
     DOM.attendanceListContainer?.classList.remove('hidden-view');
 }
 
+// ─── Setup Logic for Exclusive Checkboxes ────────────────────────
+export function setupAttendanceUIListeners() {
+    DOM.noActivityCheck?.addEventListener('change', function() {
+        if (this.checked) {
+            DOM.isSpecialCheck.checked = false;
+            DOM.specialReasonInput.classList.add('hidden-view');
+            DOM.servantsChecklist.classList.add('hidden');
+        } else {
+            DOM.servantsChecklist.classList.remove('hidden');
+        }
+    });
+
+    DOM.isSpecialCheck?.addEventListener('change', function() {
+        if (this.checked) {
+            DOM.noActivityCheck.checked = false;
+            DOM.specialReasonInput.classList.remove('hidden-view');
+            DOM.servantsChecklist.classList.add('hidden');
+        } else {
+            DOM.specialReasonInput.classList.add('hidden-view');
+            DOM.servantsChecklist.classList.remove('hidden');
+        }
+    });
+}
+
 // ─── Save Attendance ──────────────────────────────────────────────
 export async function saveActivityAttendance() {
     await authReady;
@@ -248,13 +277,23 @@ export async function saveActivityAttendance() {
         const [year] = selectedFriday.split('-').map(Number);
         let activityUpdate;
 
-        if (DOM.noActivityCheck?.checked) {
-            activityUpdate = { attendees: [], note: DOM.noActivityReason?.value || 'تم الإلغاء' };
+        if (DOM.isSpecialCheck?.checked) {
+            activityUpdate = {
+                attendees: [],
+                note: DOM.specialReasonInput?.value || 'تم الإلغاء لظرف استثنائي',
+                isSpecial: true
+            };
+        } else if (DOM.noActivityCheck?.checked) {
+            activityUpdate = {
+                attendees: [],
+                note: 'تقصير/لم يتم التسجيل',
+                isSpecial: false
+            };
         } else {
             const attendees = [...DOM.servantsChecklist
                 .querySelectorAll('input[type="checkbox"]:checked')]
                 .map(cb => cb.dataset.servantId);
-            activityUpdate = { attendees, note: null };
+            activityUpdate = { attendees, note: null, isSpecial: false };
         }
 
         const dayData = AppState.attendanceYearCache[selectedFriday] || { year };
@@ -330,10 +369,36 @@ export function getLastFridayAbsences(servantsCache, attendanceCache) {
     ACTIVITIES.filter(a => a.key !== 'apology').forEach(act => {
         (dayData[act.key]?.attendees || []).forEach(id => allAttendees.add(id));
     });
-    const excusedSet = new Set(dayData['apology']?.attendees || []);
+    const globalExcusedSet = new Set(dayData['apology']?.attendees || []);
 
-    const absent = servantsCache.filter(s => !allAttendees.has(s.id)).map(s => {
-        const isExcused = excusedSet.has(s.id);
+    const absent = servantsCache.filter(s => {
+        if (allAttendees.has(s.id)) return false; // Not absent, they attended something
+
+        // Did their SPECIFIC service get cancelled on this date?
+        let sDayData = attendanceCache[dateStr] || {};
+        if (AppState.isGeneralSecretaryMode && s.serviceName) {
+            const entry = AppState.allAttendanceCache.find(x => x.date === dateStr && x.serviceName === s.serviceName);
+            if (entry) sDayData = entry;
+        }
+
+        // If 'service' (the main activity) is marked as Special or has a note but nobody attended, it's cancelled/no activity.
+        if (sDayData['service']?.isSpecial || sDayData['service']?.note != null) {
+            return false; // Not absent, the service was cancelled or didn't happen
+        }
+
+        return true;
+    }).map(s => {
+        let sDayData = attendanceCache[dateStr] || {};
+        let sExcusedSet = globalExcusedSet;
+        if (AppState.isGeneralSecretaryMode && s.serviceName) {
+            const entry = AppState.allAttendanceCache.find(x => x.date === dateStr && x.serviceName === s.serviceName);
+            if (entry) {
+                sDayData = entry;
+                sExcusedSet = new Set(sDayData['apology']?.attendees || []);
+            }
+        }
+
+        const isExcused = sExcusedSet.has(s.id);
         let consecutiveAbsences = 1;
         
         if (!isExcused) {
@@ -345,7 +410,13 @@ export function getLastFridayAbsences(servantsCache, attendanceCache) {
                 const pm = String(pastDate.getMonth() + 1).padStart(2, '0');
                 const pd = String(pastDate.getDate()).padStart(2, '0');
                 const pDateStr = `${py}-${pm}-${pd}`;
-                const pDayData = attendanceCache[pDateStr] || {};
+                
+                let pDayData = attendanceCache[pDateStr] || {};
+                if (AppState.isGeneralSecretaryMode && s.serviceName) {
+                    const pEntry = AppState.allAttendanceCache.find(x => x.date === pDateStr && x.serviceName === s.serviceName);
+                    if (pEntry) pDayData = pEntry;
+                    else pDayData = {}; // Must reset if empty for this service!
+                }
                 
                 let anyAttendanceThatWeek = false;
                 let servantAttendedThatWeek = false;
@@ -372,9 +443,9 @@ export function getLastFridayAbsences(servantsCache, attendanceCache) {
         return { ...s, isExcused, consecutiveAbsences };
     });
 
-    // Check if the main 'service' activity was cancelled
+    // Check if the main 'service' activity was cancelled (Only applies for specific single service view)
     let serviceCancelledReason = null;
-    if (dayData['service']?.note != null) {
+    if (!AppState.isGeneralSecretaryMode && dayData['service']?.isSpecial) {
         serviceCancelledReason = dayData['service'].note;
     }
 
@@ -408,7 +479,7 @@ export function getAttendanceChartData(servantsCache, attendanceCache, days = 30
         Object.entries(attendanceCache).forEach(([date, dayData]) => {
             if (date >= startStr) {
                 // Determine if this day was active (any non-cancelled non-apology activity exists)
-                const isDayActive = ACTIVITIES.some(act => act.key !== 'apology' && dayData[act.key] && dayData[act.key].note == null);
+                const isDayActive = ACTIVITIES.some(act => act.key !== 'apology' && dayData[act.key] && !dayData[act.key].isSpecial);
                 
                 if (isDayActive) {
                     totalSessions++;

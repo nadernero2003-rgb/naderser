@@ -55,9 +55,9 @@ export function openServiceChoiceModal(serviceName) {
 // ─── Password Modal Handler ────────────────────────────────────────
 export async function handlePasswordSubmit(e) {
     e.preventDefault();
-    const password    = DOM.servicePasswordInput.value.trim();
+    const password = DOM.servicePasswordInput.value.trim();
     const serviceName = DOM.passwordModal.dataset.targetService;
-    const action      = DOM.passwordModal.dataset.targetAction;
+    const action = DOM.passwordModal.dataset.targetAction;
 
     if (!verifyPassword(serviceName, password)) {
         showMessage('كلمة السر غير صحيحة!', true);
@@ -108,11 +108,11 @@ export function logout() {
     if (DOM.loginOrServicesView) DOM.loginOrServicesView.classList.remove('hidden-view');
 
     // Reset sidebar visibility
-    ['servantsPage','attendancePage','calendarPage'].forEach(page => {
+    ['servantsPage', 'attendancePage', 'calendarPage'].forEach(page => {
         const link = DOM.sidebarLinks?.querySelector(`[data-page="${page}"]`);
         if (link) link.classList.remove('hidden-view');
     });
-    ['announcementsBoardLink','correspondenceLink','followUpLink','serviceAnnouncementsLink']
+    ['announcementsBoardLink', 'correspondenceLink', 'followUpLink', 'serviceAnnouncementsLink']
         .forEach(id => DOM[id]?.classList.add('hidden-view'));
 
     // Refresh service badges
@@ -121,5 +121,36 @@ export function logout() {
 
 // ─── Settings ──────────────────────────────────────────────────────
 export function openSettings() {
-    openModal(DOM.settingsModal);
+    const modal = document.getElementById('settingsPasswordModal');
+    if (!modal) return;
+    // Clear previous input and error
+    const input = document.getElementById('settingsPasswordInput');
+    const errEl = document.getElementById('settingsPasswordError');
+    if (input) { input.value = ''; input.type = 'password'; }
+    if (errEl) errEl.classList.add('hidden');
+    // Reset eye icon
+    const eyeBtn = document.getElementById('toggleSettingsPwdVisibility');
+    if (eyeBtn) eyeBtn.querySelector('i').className = 'fas fa-eye text-sm';
+    openModal(modal);
+    setTimeout(() => input?.focus(), 100);
+}
+
+export function handleSettingsPasswordSubmit(e) {
+    if (e) e.preventDefault();
+    const input = document.getElementById('settingsPasswordInput');
+    const errEl = document.getElementById('settingsPasswordError');
+    const pass = input?.value?.trim();
+
+    if (pass === '2203') {
+        closeModal(document.getElementById('settingsPasswordModal'));
+        if (input) input.value = '';
+        openModal(DOM.settingsModal);
+    } else {
+        if (errEl) errEl.classList.remove('hidden');
+        if (input) { input.value = ''; input.classList.add('border-red-400'); }
+        setTimeout(() => {
+            if (input) input.classList.remove('border-red-400');
+        }, 1000);
+        input?.focus();
+    }
 }

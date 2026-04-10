@@ -14,7 +14,7 @@ export function initDOM() {
         // Pages
         'homePage','servantsPage','attendancePage','reportsPage',
         'calendarPage','correspondencePage','correspondenceCenterPage',
-        'followUpPage','serviceAnnouncementsPage','announcementsBoardPage',
+        'followUpPage','serviceAnnouncementsPage','announcementsBoardPage', 'eventsPage',
         // Sidebar links
         'correspondenceLink','followUpLink','attendancePageLink','correspondenceCenterLink',
         'serviceAnnouncementsLink','announcementsBoardLink','comparisonReportTab','calendarPageLink',
@@ -23,12 +23,12 @@ export function initDOM() {
         'searchInput','addManualBtn','importExcelBtn','exportServantsExcelBtn',
         'manualEntryModal','manualEntryModalTitle','manualEntryForm',
         'servantId','servantName','servantMobile','servantDob','servantNationalId',
-        'servantChapter','servantCurrentService','servantJob','servantAddress','servantQualification',
+        'servantChapter','servantCurrentService','servantJoinDate','servantJob','servantAddress','servantQualification',
         'servantConfessionFather','servantImageFile','imagePreview',
         // Attendance Page
         'yearSelector','monthSelector','fridaysGrid','activityButtons',
         'attendanceListContainer','attendanceListTitle','noActivitySection',
-        'noActivityCheck','noActivityLabel','noActivityReason',
+        'noActivityCheck','isSpecialCheck','specialReasonInput',
         'servantsChecklist','saveActivityAttendanceBtn',
         // Reports Page
         'reportTabs','standardReportsContainer','comparisonReportContainer',
@@ -60,6 +60,7 @@ export function initDOM() {
         // Follow-up
         'attendanceFollowUpPanel','followUpPanel','birthdaysPanel',
         'followUpSearchInput','clearSearchBtn',
+        'followUpGridViewBtn','followUpTableViewBtn',
         // Service Announcements
         'bulletinBoard','bulletinBoardTitle','loadMoreAnnouncementsBtn','loadMoreAnnouncementsContainer',
         // Aggregated Events Modal
@@ -72,6 +73,11 @@ export function initDOM() {
         'activityAttendeesModal','activityAttendeesModalTitle','activityAttendeesModalBody',
         // Settings
         'settingsModal','geminiApiKeyInput',
+        'settingsPasswordModal','settingsPasswordInput',
+        // Service Events
+        'serviceEventsSection','serviceEventsContainer',
+        'createServiceEventModal','serviceEventAttendanceModal',
+        'eventAttendanceModalTitle','eventAttendanceModalBody',
         // AI Greeting Modal
         'aiGreetingModal','aiGreetingModalBody','aiGreetingActions','copyGreetingBtn','whatsappGreetingBtn',
         // Sidebar UI
@@ -166,11 +172,11 @@ export function applyTheme(theme) {
 export function toggleTheme() {
     const isDark = document.documentElement.classList.contains('dark');
     const newTheme = isDark ? 'light' : 'dark';
-    // Save per-service key if logged in, also save global key for the login screen
+    // Save only to service-specific key. Do NOT save to global 'theme' to prevent
+    // login screen from being affected on next page load.
     if (AppState.currentServiceName) {
         localStorage.setItem(`theme-${AppState.currentServiceName}`, newTheme);
     }
-    localStorage.setItem('theme', newTheme);
     applyTheme(newTheme);
 }
 
@@ -247,15 +253,18 @@ export function getUpcomingBirthdays(servants, daysAhead = 30) {
     const today = new Date();
     today.setHours(0,0,0,0);
     return servants
-        .filter(s => s.dob)
+        .filter(s => s.dob && typeof s.dob === 'string')
         .map(s => {
-            const [y, m, d] = s.dob.split('-').map(Number);
+            const parts = s.dob.split('-');
+            if (parts.length !== 3) return null;
+            const [y, m, d] = parts.map(Number);
+            if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
             let next = new Date(today.getFullYear(), m-1, d);
             if (next < today) next.setFullYear(today.getFullYear() + 1);
             const diff = Math.round((next - today) / 86400000);
             return { ...s, daysUntil: diff, date: `${d}/${m}` };
         })
-        .filter(s => s.daysUntil <= daysAhead)
+        .filter(s => s !== null && s.daysUntil <= daysAhead)
         .sort((a, b) => a.daysUntil - b.daysUntil);
 }
 

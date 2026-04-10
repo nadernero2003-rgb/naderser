@@ -177,59 +177,54 @@ function openCalendarEventModal(dateStr) {
         DOM.deleteEventBtn.classList.add('hidden-view');
 
         const card = document.createElement('div');
-        card.className = 'event-details-card space-y-3 py-2 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2';
-        
+        card.className = 'event-details-card space-y-2 py-2 max-h-[65vh] overflow-y-auto custom-scrollbar pr-1';
+
         if (events.length === 0) {
             card.innerHTML = `
-                <div class="text-center py-8 bg-slate-50 dark:bg-slate-900/20 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700">
-                    <div class="w-12 h-12 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
-                        <i class="fas fa-calendar-times text-xl text-slate-300"></i>
+                <div class="text-center py-10 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+                    <div class="w-14 h-14 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm border border-slate-100 dark:border-slate-700">
+                        <i class="fas fa-calendar-times text-2xl text-slate-300 dark:text-slate-600"></i>
                     </div>
-                    <p class="text-sm font-black text-slate-400 dark:text-slate-500">لا توجد أحداث مسجلة</p>
+                    <p class="text-sm font-bold text-slate-400 dark:text-slate-500">لا توجد أحداث مسجلة لهذا اليوم</p>
                 </div>`;
         } else {
-            const isDarkTheme = document.documentElement.classList.contains('dark');
-            card.innerHTML = events.map(e => {
-                const svc = SERVICES.find(s => s.name === e.serviceName) || { color: 'blue' };
-                // Map color to Tailwind-like hex or classes
-                const colors = {
-                    teal:   { border: '#2dd4bf', bg: '#f0fdfa', text: '#0d9488', darkBg: '#042f2e' },
-                    lime:   { border: '#a3e635', bg: '#f7fee7', text: '#65a30d', darkBg: '#1a2e05' },
-                    green:  { border: '#4ade80', bg: '#f0fdf4', text: '#16a34a', darkBg: '#052e16' },
-                    yellow: { border: '#facc15', bg: '#fefce8', text: '#ca8a04', darkBg: '#2d1f00' },
-                    pink:   { border: '#f472b6', bg: '#fdf2f8', text: '#db2777', darkBg: '#2d0a1e' },
-                    indigo: { border: '#818cf8', bg: '#eef2ff', text: '#4f46e5', darkBg: '#1e1b4b' },
-                    red:    { border: '#fb7185', bg: '#fef2f2', text: '#dc2626', darkBg: '#2d0707' },
-                    purple: { border: '#c084fc', bg: '#faf5ff', text: '#9333ea', darkBg: '#1a0838' },
-                    cyan:   { border: '#22d3ee', bg: '#ecfeff', text: '#0891b2', darkBg: '#042830' },
-                    orange: { border: '#fb923c', bg: '#fff7ed', text: '#ea580c', darkBg: '#2d1200' },
-                    blue:   { border: '#60a5fa', bg: '#eff6ff', text: '#2563eb', darkBg: '#0c1a3d' }
-                };
-                const c = colors[svc.color] || colors.blue;
-                
-                return `
-                <div class="group relative p-3 mb-2 rounded-xl bg-white dark:bg-slate-800 border shadow-sm hover:shadow-md transition-all overflow-hidden"
-                     style="border-color: ${c.border}44;">
-                    <div class="absolute top-0 right-0 w-1 h-full" style="background-color: ${c.border}"></div>
-                    
-                    <div class="flex justify-between items-start mb-2">
-                        <div class="flex flex-col">
-                            <span class="font-black text-sm text-slate-800 dark:text-slate-100 mb-0.5">${e.type}</span>
-                            <div class="flex items-center gap-1.5">
-                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${c.border}"></span>
-                                <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 tracking-wider">${e.serviceName || 'نشاط عام'}</span>
-                            </div>
-                        </div>
-                        <div class="px-2 py-0.5 rounded-lg text-[9px] font-black border" 
-                             style="color: ${c.text}; background-color: ${isDarkTheme ? c.darkBg : c.bg}; border-color: ${c.border}33;">
-                            ${svc.name}
-                        </div>
-                    </div>
+            const colors = {
+                teal:   { border: '#2dd4bf', bg: '#f0fdfa', darkBg: '#042f2e', text: '#0d9488' },
+                lime:   { border: '#a3e635', bg: '#f7fee7', darkBg: '#1a2e05', text: '#65a30d' },
+                green:  { border: '#4ade80', bg: '#f0fdf4', darkBg: '#052e16', text: '#16a34a' },
+                yellow: { border: '#facc15', bg: '#fefce8', darkBg: '#2d1f00', text: '#ca8a04' },
+                pink:   { border: '#f472b6', bg: '#fdf2f8', darkBg: '#2d0a1e', text: '#db2777' },
+                indigo: { border: '#818cf8', bg: '#eef2ff', darkBg: '#1e1b4b', text: '#4f46e5' },
+                red:    { border: '#fb7185', bg: '#fef2f2', darkBg: '#2d0707', text: '#dc2626' },
+                purple: { border: '#c084fc', bg: '#faf5ff', darkBg: '#1a0838', text: '#9333ea' },
+                cyan:   { border: '#22d3ee', bg: '#ecfeff', darkBg: '#042830', text: '#0891b2' },
+                orange: { border: '#fb923c', bg: '#fff7ed', darkBg: '#2d1200', text: '#ea580c' },
+                blue:   { border: '#60a5fa', bg: '#eff6ff', darkBg: '#0c1a3d', text: '#2563eb' }
+            };
+            const isDark = document.documentElement.classList.contains('dark');
 
-                    <div class="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-700/50">
-                        <p class="text-[11px] text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed font-bold">
-                            ${e.details || 'لا توجد تفاصيل إضافية لهذا النشاط.'}
-                        </p>
+            card.innerHTML = events.map(e => {
+                const svc = SERVICES.find(s => s.name === e.serviceName) || { color: 'blue', icon: 'fa-church' };
+                const c = colors[svc.color] || colors.blue;
+                const typeColor = EVENT_TYPES[e.type] || 'bg-teal-500';
+                return `
+                <div class="relative flex items-start gap-3 p-3.5 rounded-2xl border bg-white dark:bg-slate-800/80 shadow-sm hover:shadow-md transition-all group"
+                     style="border-color: ${c.border}30; border-right: 4px solid ${c.border};">
+                    <!-- Type badge top-left -->
+                    <div class="flex-shrink-0 flex flex-col items-center gap-1.5 pt-0.5">
+                        <span class="w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm shadow-sm ${typeColor}">
+                            <i class="fas fa-bookmark"></i>
+                        </span>
+                    </div>
+                    <div class="flex-grow min-w-0">
+                        <div class="flex items-center justify-between gap-2 flex-wrap mb-1">
+                            <span class="font-black text-sm text-slate-800 dark:text-slate-100 truncate">${e.type}</span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0"
+                                  style="color:${c.text}; background:${isDark ? c.darkBg : c.bg}; border-color:${c.border}40;">
+                                <i class="fas fa-cross mr-1 opacity-60"></i>${e.serviceName || 'عام'}
+                            </span>
+                        </div>
+                        ${e.details ? `<p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">${e.details}</p>` : '<p class="text-xs text-slate-400 italic">لا توجد تفاصيل إضافية.</p>'}
                     </div>
                 </div>`;
             }).join('');

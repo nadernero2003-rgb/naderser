@@ -196,6 +196,7 @@ export function listenForIncomingNotes() {
         AppState.unreadNotes = snap.docs.map(d => ({ ...d.data(), id: d.id }));
         renderIncomingNotes(AppState.unreadNotes);
         const unread = AppState.unreadNotes.filter(n => !n.isRead).length;
+        AppState.unreadNotesCount = unread;
         updateBadge(DOM.correspondenceBadge, unread);
         updateAdminBadge(unread);
     }, err => console.error('incoming notes:', err));
@@ -309,11 +310,14 @@ export async function markNotesAsRead() {
     if (AppState.isLocalMode || !AppState.isGeneralSecretaryMode) return;
     const unread = AppState.unreadNotes.filter(n => !n.isRead);
     if (!unread.length) return;
+
+    // Optimistic UI Update
+    updateBadge(DOM.correspondenceBadge, 0);
+    updateAdminBadge(0);
+
     await Promise.all(unread.map(n =>
         updateDoc(doc(AppState.db, 'notesToAdmin', n.id), { isRead: true })
     ));
-    updateBadge(DOM.correspondenceBadge, 0);
-    updateAdminBadge(0);
 }
 
 // ─── Update Service Card Badges (for main page) ────────────────────
@@ -336,12 +340,27 @@ export async function updateServiceCardBadges() {
             updateBadge(document.getElementById(badgeId), unread);
         });
 
-        // 2. General Secretary Card (Group Service - Messages to Admin)
+        // 2. General Secretary Card (Group Service - Combined Badge)
         const gsCard = SERVICES.find(s => s.isGroup);
         if (gsCard) {
-            const unreadNotesCount = (AppState.unreadNotes || []).filter(n => !n.isRead).length;
+            // Unread Announcements for GS
+            const lastRead = Local.get(`lastReadAnn-${gsCard.name}`) || 0;
+            const relevantAnn = all.filter(a =>
+                a.targetServices?.includes('all') || a.targetServices?.includes(gsCard.name)
+            );
+            const unreadAnnCount = relevantAnn.filter(a => (a.timestamp?.toMillis?.() || 0) > lastRead).length;
+
+            // Unread Notes (Incoming Correspondence)
+            // Fetch directly from Firestore for accuracy on initial load
+            const notesCol = collection(AppState.db, 'notesToAdmin');
+            const notesSnap = await getDocs(query(notesCol, where('isRead', '==', false)));
+            const unreadNotesCount = notesSnap.size;
+            
+            // Store globally
+            AppState.unreadNotesCount = unreadNotesCount;
+
             const badgeId = `service-badge-${gsCard.name.replace(/\s+/g, '-')}`;
-            updateBadge(document.getElementById(badgeId), unreadNotesCount);
+            updateBadge(document.getElementById(badgeId), unreadAnnCount + unreadNotesCount);
         }
     } catch (e) { console.error('updateServiceCardBadges:', e); }
 }

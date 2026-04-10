@@ -47,81 +47,102 @@ export async function generateContent(prompt) {
     }
 
     // ─── Try calling the API ───────────────────────────────────────
-    const PREFERRED_MODELS = [
-        'gemini-1.5-flash', 'gemini-1.5-flash-001', 'gemini-1.5-flash-8b',
-        'gemini-1.5-pro', 'gemini-1.5-pro-001', 'gemini-1.0-pro', 'gemini-pro',
-        'gemini-2.0-flash-exp'
+    // Each entry: [endpoint, modelName] - trying different API versions and models
+    // because some models only work on v1beta, others only on v1
+    const MODEL_ENDPOINTS = [
+        ['v1beta', 'gemini-2.0-flash-lite'],
+        ['v1beta', 'gemini-2.0-flash'],
+        ['v1', 'gemini-1.5-flash'],
+        ['v1beta', 'gemini-1.5-flash'],
+        ['v1', 'gemini-pro'],
+        ['v1beta', 'gemini-pro'],
     ];
 
-    async function getModel(apiKey, excluded = []) {
-        const cached = localStorage.getItem('geminiValidModel');
-        if (cached && !excluded.includes(cached)) return cached;
-
-        try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-            if (!res.ok) throw new Error('Failed to list models');
-            const { models = [] } = await res.json();
-            const available = models.filter(m =>
-                m.supportedGenerationMethods?.includes('generateContent') &&
-                !excluded.includes(m.name.split('/').pop())
-            );
-            if (!available.length) return null;
-
-            let best = null;
-            for (const pref of PREFERRED_MODELS) {
-                const found = available.find(m => m.name.toLowerCase().includes(pref.toLowerCase()));
-                if (found) { best = found.name.split('/').pop(); break; }
-            }
-            if (!best) best = available[0].name.split('/').pop();
-            localStorage.setItem('geminiValidModel', best);
-            return best;
-        } catch { return 'gemini-pro'; }
-    }
-
-    async function callModel(modelName) {
-        const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            }
-        );
-        if (res.status === 429) throw new Error('RATE_LIMIT');
+    async function callModel(apiVersion, modelName) {
+        const url = `https://generativelanguage.googleapis.com/${apiVersion}/models/${modelName}:generateContent?key=${apiKey}`;
+        console.log(`[AI] Trying ${apiVersion}/${modelName}...`);
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        console.log(`[AI] ${modelName} → HTTP ${res.status}`);
         if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.error?.message || `HTTP ${res.status}`);
+            const errData = await res.json().catch(() => ({}));
+            const errMsg = errData.error?.message || `HTTP ${res.status}`;
+            console.error(`[AI] ${modelName} error:`, errMsg);
+            // Model not found - skip (don't count as rate limit)
+            if (res.status === 404) throw new Error('MODEL_NOT_FOUND');
+            if (res.status === 429 || res.status === 503) throw new Error('RATE_LIMIT');
+            throw new Error(errMsg);
         }
         const data = await res.json();
-        return data.candidates?.[0]?.content?.parts?.[0]?.text || 'لم يُستلم أي رد.';
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) console.warn('[AI] Empty response from', modelName, data);
+        return text || 'لم يُستلم أي رد.';
     }
 
-    // Retry logic with model rotation
-    let excluded = [], maxAttempts = 3;
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    let lastError = null;
+    let rateLimitCount = 0;
+    for (const [apiVersion, modelName] of MODEL_ENDPOINTS) {
         try {
-            const model = await getModel(apiKey, excluded);
-            if (!model) throw new Error('لا توجد نماذج متاحة لهذا المفتاح.');
-            return await callModel(model);
+            const result = await callModel(apiVersion, modelName);
+            localStorage.setItem('geminiValidModel', modelName);
+            console.log(`[AI] ✓ Success with ${modelName}`);
+            return result;
         } catch (err) {
-            if (err.message === 'RATE_LIMIT') {
-                const cur = localStorage.getItem('geminiValidModel');
-                if (cur) excluded.push(cur);
-                localStorage.removeItem('geminiValidModel');
-                await new Promise(r => setTimeout(r, 1000));
-                continue;
-            }
-            // Invalid key
-            if (err.message.includes('API key') || err.message.includes('403')) {
+            lastError = err;
+            // Invalid API key - stop immediately
+            if (err.message.includes('API key') || err.message.includes('API_KEY') || err.message.includes('403')) {
                 AppState.geminiApiKey = null;
                 localStorage.removeItem('geminiApiKey');
                 localStorage.removeItem('geminiValidModel');
                 showMessage('مفتاح API غير صالح. الرجاء إعادة إدخاله من الإعدادات.', true);
+                throw err;
             }
-            throw err;
+            if (err.message === 'RATE_LIMIT') {
+                rateLimitCount++;
+                await new Promise(r => setTimeout(r, 1000));
+                continue;
+            }
+            if (err.message === 'MODEL_NOT_FOUND') continue;
+            continue;
         }
     }
-    throw new Error('تم استنفاد جميع المحاولات. الرجاء الانتظار دقيقة.');
+    // If hardcoded ones fail, try dynamically discovering available models
+    if (lastError && lastError.message === 'MODEL_NOT_FOUND') {
+        console.log('[AI] Hardcoded models not found. Attempting dynamic discovery...');
+        try {
+            const discoveryRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+            if (discoveryRes.ok) {
+                const discoveryData = await discoveryRes.json();
+                const availableGemini = discoveryData.models?.filter(m => 
+                    m.supportedGenerationMethods?.includes('generateContent') && 
+                    m.name.includes('gemini')
+                );
+                
+                if (availableGemini && availableGemini.length > 0) {
+                    const dynamicModelName = availableGemini[0].name.replace('models/', '');
+                    console.log(`[AI] Discovered model: ${dynamicModelName}, trying it...`);
+                    const result = await callModel('v1beta', dynamicModelName);
+                    localStorage.setItem('geminiValidModel', dynamicModelName);
+                    console.log(`[AI] ✓ Success with dynamically discovered ${dynamicModelName}`);
+                    return result;
+                }
+            }
+        } catch (e) {
+            console.error('[AI] Dynamic discovery failed:', e);
+        }
+    }
+
+    // Better error message based on what actually happened
+    if (rateLimitCount >= MODEL_ENDPOINTS.length / 2) {
+        console.error('[AI] All models returned 429 (quota exhausted).');
+        throw new Error('تم استنفاذ حصة مفتاح API بالكامل. الرجاء إنشاء مفتاح جديد من aistudio.google.com أو الانتظار حتى تجديد الحصة.');
+    }
+    const detail = lastError?.message || 'خطأ غير معروف';
+    console.error('[AI] All models failed. Last error:', detail);
+    throw new Error(`فشل الاتصال بالذكاء الصناعي. السبب: ${detail}. تأكد أن المفتاح يعمل في بلدك وأنه يحتوي على رصيد/حصة.`);
 }
 
 // ─── AI Features ──────────────────────────────────────────────────
@@ -139,8 +160,9 @@ export async function generateBirthdayGreeting(name) {
  */
 export async function generateIndividualAnalysis(servantName, stats, avgPercent) {
     let statsText = `المتوسط العام: ${avgPercent}%\n`;
-    for (const [activity, percent] of Object.entries(stats)) {
-        statsText += `${activity}: ${percent}\n`;
+    // stats is an array of {name, perc} objects
+    for (const item of stats) {
+        statsText += `${item.name}: ${item.perc}%\n`;
     }
 
     const prompt = `أنت خادم أمين في الكنيسة. اكتب رسالة شخصية ومشجعة للخادم "${servantName}" بناءً على تقرير حضوره:
@@ -173,6 +195,31 @@ export async function generateComprehensiveAnalysis(serviceName, avgPercent, top
 3. خطة تشجيعية مختصرة للمتابعة.
 4. آية كتابية للتشجيع.
 استخدم أسلوباً مشجعاً وروحياً. لا جداول.`;
+
+    return await generateContent(prompt);
+}
+
+/**
+ * Generate period comparison AI analysis
+ */
+export async function generatePeriodAnalysis(periodData) {
+    let periodsText = '';
+    periodData.forEach(pd => {
+        periodsText += `\n${pd.label} (${pd.start} → ${pd.end}): المتوسط ${pd.avgPct}%`;
+        pd.actPcts.forEach(a => {
+            periodsText += `\n  - ${a.act}: ${a.pct}%`;
+        });
+    });
+
+    const prompt = `أنت محلل بيانات تعليمية في كنيسة. حلّل مقارنة الفترات التالية لخدمة ابتدائي:
+${periodsText}
+
+المطلوب:
+1. ملخص التطور أو التراجع بين الفترات.
+2. أي الأنشطة تحسنت وأيها تراجعت.
+3. توصيات عملية لتحسين الأنشطة الضعيفة.
+4. آية كتابية مشجعة.
+كن مختصراً ومشجعاً. استخدم emojis. لا جداول.`;
 
     return await generateContent(prompt);
 }

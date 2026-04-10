@@ -13,7 +13,7 @@ import {
 } from './ui.js';
 import { loadServants, displayUpcomingBirthdays, renderServantsTable, populateServiceFilter } from './servants.js';
 import { loadAttendancePage, loadAttendanceForYear, getLastFridayAbsences, getAttendanceChartData, fetchFullAttendance, getServantHistoryStatusForDate } from './attendance.js';
-import { loadReportsPage } from './reports.js';
+import { loadReportsPage, populateReportActivitySelector } from './reports.js';
 import { loadCalendarPage } from './calendar.js';
 import {
     listenForAnnouncements, listenForServiceAnnouncements, listenForSentNotes,
@@ -40,6 +40,12 @@ export async function showDashboard() {
         DOM.serviceAnnouncementsLink?.classList.toggle('hidden-view', isAdmin);
         DOM.correspondenceCenterLink?.classList.toggle('hidden-view', !isAdmin);
         DOM.announcementsBoardLink?.classList.toggle('hidden-view', !isAdmin);
+        
+        const eventsLink = document.getElementById('eventsPageLink');
+        if (eventsLink) eventsLink.classList.toggle('hidden-view', isAdmin);
+
+        const activityStatusCard = document.getElementById('activityStatusCard');
+        if (activityStatusCard) activityStatusCard.classList.remove('hidden-view');
 
         const calText = document.getElementById('calendarLinkText');
         if (calText) calText.textContent = isAdmin ? 'أجندة الأمين العام' : 'التقويم';
@@ -110,6 +116,8 @@ export async function loadHomePage() {
         DOM.adminDashboardContainer?.classList.add('hidden-view');
         await loadAttendanceForYear(new Date().getFullYear());
         renderServiceDashboard();
+        // Load events section for non-admin services
+        await renderServiceEvents();
     }
 }
 
@@ -125,13 +133,15 @@ function renderServiceDashboard() {
     renderLastFridayDetails(servantsCountToUse, attendanceYearCache);
     renderActivityAvgChart(servantsCountToUse, attendanceYearCache);
     renderHomeChart(servantsCountToUse, attendanceYearCache);
+    renderWeeklyTrend(servantsCountToUse, attendanceYearCache);
+    renderServiceTips(servantsCountToUse, attendanceYearCache);
 }
 
 function renderHomeChart(servantsCache, attendanceYearCache) {
     const ctx = document.getElementById('homeAttendanceChart');
     if (!ctx) return;
     if (AppState.charts.home) AppState.charts.home.destroy();
-    const { labels, datasets } = getAttendanceChartData(servantsCache, attendanceYearCache, 12);
+    const { labels, datasets } = getAttendanceChartData(servantsCache, attendanceYearCache, 30);
     AppState.charts.home = new Chart(ctx, {
         type: 'bar',
         data: { labels, datasets },
@@ -161,17 +171,31 @@ function renderServiceKpis(servants, upcoming) {
                 ${upcoming.map(s => {
                 const today = new Date();
                 const bStr = s.dob;
-                if (!bStr) return '';
-                const [yyyy, mm, dd] = bStr.split('-');
-                let nextBday = new Date(today.getFullYear(), parseInt(mm) - 1, parseInt(dd));
-                if (nextBday < today && nextBday.toDateString() !== today.toDateString()) {
-                    nextBday.setFullYear(today.getFullYear() + 1);
-                }
-                const diffTime = Math.abs(nextBday - today);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                let dayStr = diffDays === 0 ? "اليوم! 🎉" : `بعد ${diffDays} يوم`;
+                if (!bStr || typeof bStr !== 'string') return '';
+                const parts = bStr.split('-');
+                if (parts.length !== 3) return '';
 
-                return `<li class="flex justify-between items-center text-sm p-3 bg-pink-50 dark:bg-pink-900/20 rounded-lg shadow-sm">
+                const [yyyy, mm, dd] = parts.map(Number);
+                if (isNaN(mm) || isNaN(dd)) return '';
+
+                let nextBday = new Date(today.getFullYear(), mm - 1, dd);
+                nextBday.setHours(0, 0, 0, 0);
+                
+                const todayMidnight = new Date();
+                todayMidnight.setHours(0, 0, 0, 0);
+
+                if (nextBday < todayMidnight) {
+                    nextBday.setFullYear(todayMidnight.getFullYear() + 1);
+                }
+                const diffTime = Math.abs(nextBday - todayMidnight);
+                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                
+                const monthNames = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+                const dateText = `${dd} ${monthNames[mm - 1]}`;
+                
+                let dayStr = diffDays === 0 ? "اليوم! 🎉" : `بعد ${diffDays} يوم (${dateText})`;
+
+                return `<li class="flex justify-between items-center text-sm p-3 bg-pink-50 dark:bg-pink-900/20 rounded-lg shadow-sm border border-transparent dark:border-pink-800/30">
                         <div class="flex items-center gap-3">
                             <i class="fas fa-birthday-cake text-pink-500"></i>
                             <span class="font-bold text-slate-800 dark:text-slate-200">${s.name}</span>
@@ -274,7 +298,7 @@ function renderLastFridayDetails(servants, attendanceCache) {
 
     if (absenceList) {
         if (serviceCancelledReason) {
-            absenceList.innerHTML = `<div class="w-full text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 p-4 rounded-lg flex items-center justify-center font-bold shadow-sm text-center">
+            absenceList.innerHTML = `<div class="w-full text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 p-4 rounded-lg flex items-center justify-center font-bold shadow-sm text-center">
                 <i class="fas fa-info-circle ml-2 text-xl"></i>
                 <p>لم تقم الخدمة: ${serviceCancelledReason}</p>
             </div>`;
@@ -327,7 +351,7 @@ function renderLastFridayDetails(servants, attendanceCache) {
                     }
 
                     return `
-                                <div class="flex items-center gap-2 p-2 rounded-lg transition-all ${bgClass} border border-transparent hover:border-slate-300 dark:hover:border-slate-600">
+                                <div class="flex items-center gap-2 p-2 rounded-lg transition-all ${bgClass} border border-transparent hover:border-slate-300 dark:hover:border-slate-500 shadow-sm">
                                     <i class="fas ${iconClass} w-4 text-center text-xs"></i>
                                     <span class="font-bold text-xs truncate">${s.name}</span>
                                     ${badge}
@@ -348,10 +372,12 @@ function renderLastFridayDetails(servants, attendanceCache) {
 
             if (!actData) {
                 statusHtml = `<div class="mt-2 text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/40 px-3 py-1 rounded-full flex items-center justify-center"><i class="fas fa-times mx-1"></i> لم يسجل</div>`;
-                cardStyle = 'border: 1px solid #fca5a5; background-color: #fff;';
+                cardStyle = 'border: 1px solid #fca5a5;';
             } else if (actData.note != null) {
-                statusHtml = `<div class="mt-2 text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/40 px-3 py-1 rounded-full flex items-center justify-center"><i class="fas fa-ban mx-1"></i> ملغى</div>`;
-                cardStyle = 'border: 1px dashed #fcd34d; background-color: #fff;';
+                statusHtml = `<div class="mt-2 text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/40 px-3 py-1 rounded-xl flex items-center justify-center text-center leading-tight">
+                    <i class="fas fa-info-circle ml-1"></i> ${actData.note}
+                </div>`;
+                cardStyle = 'border: 1px dashed #fcd34d;';
             } else {
                 const cnt = actData.attendees?.length || 0;
                 // Add click handler for modal
@@ -367,14 +393,18 @@ function renderLastFridayDetails(servants, attendanceCache) {
                         <i class="fas fa-check mx-1"></i> ${cnt} / ${total}
                     </div>`;
                 }
-                cardStyle = 'border: 1px solid #86efac; background-color: #f0fdf4;';
+                cardStyle = 'border: 1px solid #86efac;';
             }
 
-            // Provide dark mode fallbacks for inline styles using Tailwind classes handled by app
-            const darkBg = actData && actData.note == null ? 'dark:bg-slate-800 dark:border-green-800' : (actData?.note != null ? 'dark:bg-slate-800 dark:border-amber-800' : 'dark:bg-slate-800 dark:border-red-900');
+            // Provide dark mode fallbacks for dynamic cards
+            const bgClass = actData && actData.note == null
+                ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800/40'
+                : (actData?.note != null
+                    ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/40'
+                    : 'bg-white dark:bg-slate-800 dark:border-slate-700');
 
             return `
-            <div ${clickAction} style="${cardStyle}" class="flex flex-col items-center justify-center p-4 rounded-xl text-center cursor-pointer hover:shadow-md hover:-translate-y-1 transition-all ${darkBg}">
+            <div ${clickAction} style="${cardStyle}" class="flex flex-col items-center justify-center p-4 rounded-xl text-center cursor-pointer hover:shadow-md hover:-translate-y-1 transition-all ${bgClass}">
                 <div class="w-12 h-12 rounded-full flex items-center justify-center mb-2 shadow-sm" style="background-color: ${act.border}; color: white;">
                     <i class="fas ${act.icon} text-xl"></i>
                 </div>
@@ -514,6 +544,142 @@ window.openActivityModal = function (actKey, dateStr) {
 };
 
 // ─── Activity Average Bar Chart ────────────────────────────────────
+// ─── Weekly Trend ─────────────────────────────────────────────────
+function renderWeeklyTrend(servants, attendanceCache) {
+    const container = document.getElementById('weeklyTrendContent');
+    if (!container || !servants.length) return;
+
+    const targetActs = ACTIVITIES.filter(a => a.key !== 'apology');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Find last 4 Fridays
+    const fridays = [];
+    let d = new Date(today);
+    while (fridays.length < 4) {
+        if (d.getDay() === 5) {
+            const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), dd = String(d.getDate()).padStart(2, '0');
+            fridays.push(`${y}-${m}-${dd}`);
+        }
+        d.setDate(d.getDate() - 1);
+    }
+    fridays.reverse();
+
+    // Calculate avg per activity for each Friday
+    const weeklyData = targetActs.map(act => {
+        const weekPercs = fridays.map(dateStr => {
+            const dayData = attendanceCache[dateStr];
+            if (!dayData || !dayData[act.key] || dayData[act.key].isSpecial) return null;
+            const attendees = dayData[act.key].attendees?.length || 0;
+            return servants.length > 0 ? Math.round((attendees / servants.length) * 100) : 0;
+        });
+
+        const validPercs = weekPercs.filter(p => p !== null);
+        const lastIdx = weekPercs.length - 1;
+        const current = weekPercs[lastIdx];
+        const prev = weekPercs[lastIdx - 1];
+        let trend = 'neutral', trendIcon = 'fa-minus', trendColor = 'text-slate-400';
+        if (current !== null && prev !== null) {
+            if (current > prev) { trend = 'up'; trendIcon = 'fa-arrow-up'; trendColor = 'text-green-500'; }
+            else if (current < prev) { trend = 'down'; trendIcon = 'fa-arrow-down'; trendColor = 'text-red-500'; }
+        }
+
+        const avg = validPercs.length > 0 ? Math.round(validPercs.reduce((a, b) => a + b, 0) / validPercs.length) : 0;
+        return { name: act.name, icon: act.icon, color: act.border, avg, trend, trendIcon, trendColor, current };
+    });
+
+    container.innerHTML = weeklyData.map(w => {
+        let displayValue = "";
+        let pctColor = "";
+        
+        if (w.current === null) {
+            displayValue = "ملغى";
+            pctColor = "text-slate-400 dark:text-slate-500 text-xl";
+        } else {
+            displayValue = w.current + "%";
+            pctColor = w.current >= 80 ? 'text-green-600 dark:text-green-400' : w.current >= 60 ? 'text-yellow-600 dark:text-yellow-400' : w.current >= 40 ? 'text-orange-500' : 'text-red-500';
+        }
+        
+        return `
+        <div class="p-3 rounded-xl border dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30 text-center transition-all hover:shadow-md">
+            <div class="flex items-center justify-center gap-1 mb-2">
+                <i class="fas ${w.icon} text-sm" style="color: ${w.color}"></i>
+                <span class="text-xs font-bold text-slate-600 dark:text-slate-300">${w.name}</span>
+            </div>
+            <div class="text-2xl font-black ${pctColor}">${displayValue}</div>
+            <div class="flex items-center justify-between gap-1 mt-2 text-[10px] border-t dark:border-slate-600 pt-1">
+                <span class="text-slate-500">متوسط شهر: <strong class="text-slate-700 dark:text-slate-300">${w.avg}%</strong></span>
+                <span class="flex items-center gap-1 ${w.trendColor} font-bold">
+                    <i class="fas ${w.trendIcon} text-[9px]"></i>
+                    ${w.trend === 'up' ? 'تحسن' : w.trend === 'down' ? 'تراجع' : 'مستقر'}
+                </span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ─── Service Tips ─────────────────────────────────────────────────
+function renderServiceTips(servants, attendanceCache) {
+    const container = document.getElementById('serviceTipsContainer');
+    if (!container) return;
+
+    const targetActs = ACTIVITIES.filter(a => a.key !== 'apology');
+    const tips = [];
+
+    // Calculate overall stats
+    const actStats = targetActs.map(act => {
+        let attended = 0, meetings = 0;
+        Object.values(attendanceCache).forEach(dayData => {
+            if (dayData[act.key] && !dayData[act.key].isSpecial && dayData[act.key].note == null) {
+                meetings++;
+                attended += dayData[act.key].attendees?.length || 0;
+            }
+        });
+        const pct = meetings > 0 && servants.length > 0 ? Math.round((attended / (meetings * servants.length)) * 100) : 0;
+        return { name: act.name, pct, meetings };
+    });
+
+    // Find weakest and strongest activities
+    const sorted = [...actStats].sort((a, b) => a.pct - b.pct);
+    const weakest = sorted.find(a => a.meetings > 0);
+    const strongest = sorted.reverse().find(a => a.meetings > 0);
+
+    if (weakest && weakest.pct < 60) {
+        tips.push({ icon: 'fa-exclamation-triangle', color: 'text-orange-500', text: `نشاط "${weakest.name}" يحتاج اهتمام أكبر (${weakest.pct}%). حاول تشجيع الخدام على المشاركة.` });
+    }
+    if (strongest && strongest.pct >= 70) {
+        tips.push({ icon: 'fa-star', color: 'text-yellow-500', text: `أعلى حضور في "${strongest.name}" (${strongest.pct}%). استمر في هذا المستوى! ⭐` });
+    }
+
+    // Count unrecorded Fridays
+    const today = new Date();
+    let unrec = 0;
+    for (let i = 0; i < 4; i++) {
+        let fd = new Date(today); fd.setDate(fd.getDate() - (fd.getDay() + 2 + i * 7));
+        const ds = fd.toISOString().split('T')[0];
+        if (!attendanceCache[ds]) unrec++;
+    }
+    if (unrec > 0) {
+        tips.push({ icon: 'fa-calendar-times', color: 'text-red-500', text: `يوجد ${unrec} جمعة بدون تسجيل في آخر شهر. سجّل الحضور أولاً بأول.` });
+    }
+
+    if (servants.length < 5) {
+        tips.push({ icon: 'fa-user-plus', color: 'text-teal-500', text: 'عدد الخدام قليل. أضف جميع الخدام للحصول على تقارير دقيقة.' });
+    }
+
+    // Default tip if no data-driven tips
+    if (tips.length === 0) {
+        tips.push({ icon: 'fa-check-circle', color: 'text-green-500', text: 'الخدمة تسير بشكل ممتاز! حافظ على الالتزام 💪' });
+    }
+
+    container.innerHTML = tips.map(t => `
+        <div class="flex items-start gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-700/40 border dark:border-slate-600/50">
+            <i class="fas ${t.icon} ${t.color} mt-0.5 flex-shrink-0"></i>
+            <span class="leading-relaxed">${t.text}</span>
+        </div>
+    `).join('');
+}
+
 function renderActivityAvgChart(servants, attendanceCache) {
     const canvas = document.getElementById('activityAvgChart');
     if (!canvas || !servants.length) return;
@@ -530,8 +696,8 @@ function renderActivityAvgChart(servants, attendanceCache) {
         return meetings > 0 ? Math.round((attended / (meetings * servants.length)) * 100) : 0;
     });
 
-    if (AppState.charts.activity) AppState.charts.activity.destroy();
-    AppState.charts.activity = new Chart(canvas, {
+    if (AppState.charts.activityHome) AppState.charts.activityHome.destroy();
+    AppState.charts.activityHome = new Chart(canvas, {
         type: 'bar',
         data: {
             labels: targetActs.map(a => a.name),
@@ -560,11 +726,11 @@ export function renderAdminDashboard() {
 }
 
 export function renderAdminServantsTable(servants) {
-    const tbody = DOM.adminServantsTableBody;
-    if (!tbody) return;
+    const container = DOM.adminServantsTableBody;
+    if (!container) return;
 
     const src = servants.slice(0, 100); // Limit for performance
-    tbody.innerHTML = src.map(s => {
+    const rows = src.map(s => {
         const val = v => v || '-';
         return `<tr onclick="openServantProfile('${s.id}')" class="border-b dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors text-sm cursor-pointer">
             <td class="p-3 font-semibold text-teal-700 dark:text-teal-400">${val(s.name)}</td>
@@ -575,6 +741,24 @@ export function renderAdminServantsTable(servants) {
             <td class="p-3">${val(s.dob)}</td>
         </tr>`;
     }).join('') || `<tr><td colspan="4" class="text-center p-8 text-slate-400">لا يوجد بيانات.</td></tr>`;
+
+    container.innerHTML = `
+        <div class="w-full overflow-x-auto">
+            <table class="w-full text-right border-collapse whitespace-nowrap">
+                <thead>
+                    <tr class="bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
+                        <th class="p-3">الاسم</th>
+                        <th class="p-3">الخدمة</th>
+                        <th class="p-3">الموبايل</th>
+                        <th class="p-3">تاريخ الميلاد</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows}
+                </tbody>
+            </table>
+        </div>
+    `;
 }
 
 function renderAdminStatsCards(servants, attendance) {
@@ -683,7 +867,7 @@ export function renderActivityRegistrationGrid() {
 
     // Build per-service attendance data
     const getServiceDayData = (svcName) => {
-        if (isGeneralSecretaryMode) {
+        if (AppState.isGeneralSecretaryMode) {
             const dayEntries = allAttendanceCache.filter(e => e.date === dateStr && e.serviceName === svcName);
             if (!dayEntries.length) return {};
             const merged = {};
@@ -696,51 +880,58 @@ export function renderActivityRegistrationGrid() {
         }
     };
 
-    // Collapse state (default = collapsed so follow-up section is visible)
+    // Collapse state (default = expanded so follow-up section is visible)
     const collapseKey = 'actRegGrid-collapsed';
-    const isCollapsed = localStorage.getItem(collapseKey) !== 'false';
+    const isCollapsed = localStorage.getItem(collapseKey) === 'true';
 
     const gridCards = svcList.map((svc) => {
         const dayData = getServiceDayData(svc.name);
-        const dotsHtml = ACTIVITIES.filter(a => a.key !== 'apology').map(act => {
+        const dotsHtml = targetActs.map(act => {
             const actData = dayData[act.key];
-            let statusClass = "bg-red-400 text-white", icon = "fa-times", desc = "لم يسجل";
+            let statusClass = "bg-[#f87171] dark:bg-red-500/80 ring-2 ring-red-200 dark:ring-red-900/50 shadow-sm", icon = "fa-times", desc = "لم يسجل";
             if (actData) {
-                if (actData.note != null) { statusClass = "bg-amber-400 text-white"; icon = "fa-minus"; desc = `ملغى: ${actData.note}`; }
-                else { statusClass = "bg-emerald-500 text-white"; icon = "fa-check"; desc = `مسجل (${actData.attendees?.length || 0})`; }
+                if (actData.note != null) { statusClass = "bg-[#facc15] dark:bg-yellow-500/80 ring-2 ring-yellow-200 dark:ring-yellow-900/50 shadow-sm"; icon = "fa-minus"; desc = actData.note; }
+                else { statusClass = "bg-[#4ade80] dark:bg-green-500/80 ring-2 ring-green-200 dark:ring-green-900/50 shadow-sm"; icon = "fa-check"; desc = `مسجل (${actData.attendees?.length || 0})`; }
             }
-            return `<div title="${act.name}: ${desc}" class="w-7 h-7 rounded-lg ${statusClass} flex items-center justify-center shadow-sm border-2 border-white dark:border-slate-800 transform hover:scale-110 transition-transform cursor-help"><i class="fas ${icon} text-[10px]"></i></div>`;
+            return `<div title="${act.name}: ${desc}" class="w-5 h-5 sm:w-6 sm:h-6 rounded-full ${statusClass} flex items-center justify-center transform hover:scale-110 transition-transform cursor-help">
+                        <i class="fas ${icon} text-[8px] sm:text-[10px] text-white"></i>
+                    </div>`;
         }).join('');
-        return `<div class="p-4 rounded-xl bg-slate-50/50 dark:bg-slate-700/20 border border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-all flex flex-col gap-3 group">
-                    <span class="font-black text-slate-700 dark:text-slate-200 text-sm group-hover:text-teal-600 transition-colors">${svc.name}</span>
-                    <div class="flex flex-wrap gap-1.5 justify-center">${dotsHtml}</div>
+        return `<div class="p-3 bg-white dark:bg-slate-800 rounded-xl mb-2 flex items-center justify-between border border-slate-100 dark:border-slate-700 shadow-sm hover:border-slate-200 dark:hover:border-slate-600 transition-all hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                    <span class="font-bold text-slate-700 dark:text-slate-200 text-xs sm:text-sm truncate pl-2">${svc.name}</span>
+                    <div class="flex items-center gap-1.5 sm:gap-2" dir="rtl">${dotsHtml}</div>
                 </div>`;
     }).join('');
 
     container.innerHTML = `
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden mb-6">
-            <button id="actRegGridToggle" class="w-full px-6 py-4 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-right border-b border-slate-100 dark:border-slate-700">
+            <button id="actRegGridToggle" class="w-full px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-right border-b border-slate-100 dark:border-slate-700">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-xl bg-teal-500/10 dark:bg-teal-400/10 flex items-center justify-center flex-shrink-0">
                         <i class="fas fa-calendar-check text-teal-600 dark:text-teal-400 text-sm"></i>
                     </div>
                     <div class="text-right">
                         <h3 class="font-black text-base text-slate-800 dark:text-slate-100 leading-tight">متابعة تسجيل الحضور</h3>
-                        <p class="text-xs text-slate-400 font-bold">آخر جمعة: <span class="text-teal-600 dark:text-teal-400">${dateAr}</span></p>
+                        <p class="text-xs text-slate-400 font-bold mt-1">آخر جمعة: <span class="text-teal-600 dark:text-teal-400">${dateAr}</span></p>
                     </div>
                 </div>
-                <div class="flex items-center gap-2 flex-shrink-0">
-                    <div class="hidden sm:flex items-center gap-2 text-[10px] font-bold">
-                        <span class="flex items-center gap-1 px-2 py-0.5 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-md border border-green-100 dark:border-green-800"><i class="fas fa-check-circle"></i> مسجل</span>
-                        <span class="flex items-center gap-1 px-2 py-0.5 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 rounded-md border border-yellow-100 dark:border-yellow-800"><i class="fas fa-minus-circle"></i> ملغى</span>
-                        <span class="flex items-center gap-1 px-2 py-0.5 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-md border border-red-100 dark:border-red-800"><i class="fas fa-exclamation-circle"></i> لم يسجل</span>
-                    </div>
+                <div class="flex items-center gap-2 flex-shrink-0 self-end sm:self-center">
                     <span class="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-lg">${isCollapsed ? 'عرض' : 'إخفاء'}</span>
                     <i id="actRegGridChevron" class="fas fa-chevron-${isCollapsed ? 'down' : 'up'} text-slate-400 text-sm"></i>
                 </div>
             </button>
-            <div id="actRegGridBody" class="${isCollapsed ? 'hidden' : 'p-5'}">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">${gridCards}</div>
+            <div id="actRegGridBody" class="${isCollapsed ? 'hidden' : 'p-3 sm:p-5'}">
+                <div class="flex flex-col sm:flex-row justify-between items-center bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl mb-4 border border-slate-100 dark:border-slate-800 gap-3">
+                    <div class="flex items-center gap-2 text-[10px] font-bold">
+                        <span class="flex items-center gap-1.5 px-2 py-1 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded border border-slate-200 dark:border-slate-700 shadow-sm"><div class="w-3 h-3 rounded-full bg-[#4ade80]"></div> مسجل</span>
+                        <span class="flex items-center gap-1.5 px-2 py-1 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded border border-slate-200 dark:border-slate-700 shadow-sm"><div class="w-3 h-3 rounded-full bg-[#facc15]"></div> ملغى</span>
+                        <span class="flex items-center gap-1.5 px-2 py-1 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded border border-slate-200 dark:border-slate-700 shadow-sm"><div class="w-3 h-3 rounded-full bg-[#f87171]"></div> لم يسجل</span>
+                    </div>
+                    <div class="text-[9px] sm:text-[10px] font-bold text-slate-500 flex items-center gap-1 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">ترتيب الأنشطة: الافتقاد - التحضير - القداس - الخدمة - الشرح</div>
+                </div>
+                <div class="bg-slate-50/50 dark:bg-slate-900/30 p-2 sm:p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                    ${gridCards}
+                </div>
             </div>
         </div>`;
 
@@ -762,7 +953,12 @@ export function renderActivityRegistrationGrid() {
 // ─── Follow-up Report (absences) - Redesigned Dashboard Style ──────────────────────────
 export async function generateFollowUpReport() {
     const { servantsCache, attendanceYearCache, isGeneralSecretaryMode } = AppState;
-    const servants = isGeneralSecretaryMode ? AppState.allServantsCache : servantsCache;
+    let servants = isGeneralSecretaryMode ? AppState.allServantsCache : servantsCache;
+
+    // Filter by selected services (GS mode)
+    if (isGeneralSecretaryMode && AppState.absenceFilterSelectedServices && AppState.absenceFilterSelectedServices.size > 0) {
+        servants = servants.filter(s => AppState.absenceFilterSelectedServices.has(s.serviceName));
+    }
 
     const selectedYear = parseInt(AppState.absenceFilterSelectedYear || new Date().getFullYear(), 10);
     const selectedMonths = AppState.absenceFilterSelectedMonths;
@@ -770,11 +966,13 @@ export async function generateFollowUpReport() {
 
     const targetActs = ACTIVITIES.filter(a => a.key !== 'apology' && (!selectedActivity || a.key === selectedActivity));
 
+    let totalSessionsGlobal = 0; // to detect "no data" scenario
+
     // Calculate Raw Results
     const results = servants.map(s => {
         let absentDates = [];
         const cache = isGeneralSecretaryMode
-            ? AppState.allAttendanceCache.filter(d => d.serviceName === (s.serviceName || s.currentService))
+            ? AppState.allAttendanceCache.filter(d => d.serviceName === s.serviceName)
             : Object.entries(attendanceYearCache).map(([date, data]) => ({ date, ...data }));
 
         let totalSessions = 0;
@@ -784,21 +982,26 @@ export async function generateFollowUpReport() {
             if (selectedMonths.size > 0 && !selectedMonths.has(d.getMonth())) return;
 
             targetActs.forEach(act => {
-                if (day[act.key] && day[act.key].note == null) {
-                    totalSessions++;
-                    const actData = day[act.key];
-                    if (!actData.attendees || !actData.attendees.includes(s.id)) {
-                        absentDates.push({ date: day.date, activity: act.name });
-                    }
+                const actData = day[act.key];
+                // Exclude if it's explicitly marked as a "Special Day"
+                if (actData && actData.isSpecial) return;
+
+                // Otherwise, it counts as an expected session
+                totalSessions++;
+                if (!actData?.attendees || !actData.attendees.includes(s.id)) {
+                    absentDates.push({ date: day.date, activity: act.name });
                 }
             });
         });
 
+        totalSessionsGlobal += totalSessions;
         const pct = totalSessions > 0 ? Math.round((absentDates.length / totalSessions) * 100) : 0;
         return { ...s, absentDates, absentCount: absentDates.length, totalSessions, pct };
     }).filter(s => s.absentCount > 0)
         .sort((a, b) => b.absentCount - a.absentCount);
 
+    // Detect "no sessions" scenario
+    AppState.followUpNoDataScenario = servants.length > 0 && totalSessionsGlobal === 0;
     AppState.followUpResultsCache = results;
     renderFollowUpResults();
 }
@@ -808,152 +1011,111 @@ export function renderFollowUpResults() {
     if (!container) return;
 
     const query = (AppState.followUpSearchQuery || '').toLowerCase().trim();
-    let results = AppState.followUpResultsCache;
+    let results = AppState.followUpResultsCache || [];
 
     if (query) {
         results = results.filter(r => (r.name || '').toLowerCase().includes(query));
     }
 
+    // Update Badge
+    const badge = document.getElementById('followUpResultsCountBadge');
+    if (badge) badge.textContent = results.length;
+
     if (!results.length) {
-        container.innerHTML = `
-            <div class="text-center py-24 animate-in fade-in duration-700">
-                <div class="w-24 h-24 bg-slate-50 dark:bg-slate-900/40 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-slate-100 dark:border-slate-800">
-                    <i class="fas fa-search text-4xl text-slate-200 dark:text-slate-700"></i>
-                </div>
-                <p class="font-black text-slate-400 dark:text-slate-600 text-lg">لم نعثر على أي نتائج مطابقة</p>
-                <p class="text-[10px] uppercase tracking-widest text-slate-400 mt-2">جرب تغيير شروط البحث أو الفلاتر</p>
-            </div>`;
+        if (AppState.followUpNoDataScenario) {
+            const noDataMessage = AppState.isGeneralSecretaryMode ? 'عفواً، لم يقم أمين الخدمة بتسجيل حضور هذا النشاط' : 'لا توجد جلسات مسجلة في هذه الفترة';
+            const noDataSub = AppState.isGeneralSecretaryMode ? 'تأكد من قيام أمناء الخدمات المختارة بتسجيل بيانات الحضور والغياب للأنشطة.' : 'لم يتم تسجيل بيانات حضور وغياب للخدمات المختارة خلال السنة المحددة. جرب تغيير السنة أو الشهور.';
+            container.innerHTML = `
+                <div class="text-center py-16 animate-in fade-in duration-700">
+                    <div class="w-20 h-20 bg-amber-50 dark:bg-amber-900/20 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner border border-amber-100 dark:border-amber-800">
+                        <i class="fas fa-database text-3xl text-amber-300 dark:text-amber-600"></i>
+                    </div>
+                    <p class="font-black text-amber-500 dark:text-amber-400 text-base mb-2">${noDataMessage}</p>
+                    <p class="text-sm text-slate-400 dark:text-slate-500 max-w-sm mx-auto">${noDataSub}</p>
+                </div>`;
+        } else {
+            container.innerHTML = `
+                <div class="text-center py-16 animate-in fade-in duration-700">
+                    <div class="w-20 h-20 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner border border-green-100 dark:border-green-800">
+                        <i class="fas fa-check-double text-3xl text-green-300 dark:text-green-600"></i>
+                    </div>
+                    <p class="font-black text-green-500 dark:text-green-400 text-base mb-2">لا يوجد غياب مسجل</p>
+                    <p class="text-sm text-slate-400 dark:text-slate-500">كل الخدام حاضرون في الفترة المحددة أو جرب تغيير شروط البحث.</p>
+                </div>`;
+        }
         return;
     }
 
-    const isGS = AppState.isGeneralSecretaryMode;
-    const colorMap = { teal:'#0d9488', lime:'#65a30d', green:'#16a34a', yellow:'#ca8a04', pink:'#db2777', indigo:'#4f46e5', red:'#dc2626', purple:'#9333ea', cyan:'#0891b2', orange:'#ea580c', blue:'#2563eb' };
+    const buildRow = (r, idx) => {
+        // Color coding by absence percentage
+        let bgStyle = 'bg-white dark:bg-slate-800/80 border-slate-100 dark:border-slate-700/50';
+        let badgeStyle = 'text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700';
+        let numBg = 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400';
+        let sideBar = 'bg-slate-300 dark:bg-slate-600';
 
-    const buildCard = (r) => {
-        const val = v => v || '-';
-        // Palette logic based on percentage (High Intensity design)
-        let palette;
-        if (r.pct >= 60) palette = { bg:'bg-red-50/30 dark:bg-red-950/20', br:'border-red-100 dark:border-red-900', text:'text-red-700 dark:text-red-400', progress:'bg-red-500', glow:'shadow-red-500/10', light:'bg-red-100 dark:bg-red-900/40' };
-        else if (r.pct >= 30) palette = { bg:'bg-orange-50/30 dark:bg-orange-950/20', br:'border-orange-100 dark:border-orange-900', text:'text-orange-700 dark:text-orange-400', progress:'bg-orange-500', glow:'shadow-orange-500/10', light:'bg-orange-100 dark:bg-orange-900/40' };
-        else palette = { bg:'bg-white dark:bg-slate-800', br:'border-slate-100 dark:border-slate-700', text:'text-slate-600 dark:text-slate-400', progress:'bg-teal-500', glow:'shadow-teal-500/5', light:'bg-slate-100 dark:bg-slate-700' };
+        if (r.pct >= 60) {
+            bgStyle = 'bg-red-50/70 dark:bg-red-900/15 border-red-100 dark:border-red-900/40';
+            badgeStyle = 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/50';
+            numBg = 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400';
+            sideBar = 'bg-red-400 dark:bg-red-600';
+        } else if (r.pct >= 30) {
+            bgStyle = 'bg-orange-50/70 dark:bg-orange-900/15 border-orange-100 dark:border-orange-900/40';
+            badgeStyle = 'text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/50';
+            numBg = 'bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400';
+            sideBar = 'bg-orange-400 dark:bg-orange-500';
+        }
 
         const safeSvc = (r.serviceName || AppState.currentServiceName || '').replace(/'/g, "\\'");
-        const mobile = r.mobile || '';
 
         return `
-        <div class="group relative flex flex-col ${palette.bg} border ${palette.br} rounded-3xl overflow-hidden hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-500 shadow-sm ${palette.glow}">
-            <!-- Top Section: Background Pattern Decoration -->
-            <div class="absolute top-0 right-0 w-full h-12 bg-gradient-to-b from-black/[0.02] dark:from-white/[0.02] to-transparent pointer-events-none"></div>
-
-            <div class="p-5 flex-grow">
-                <!-- Header: Avatar & Basic Info -->
-                <div class="flex items-start gap-4 mb-5">
-                    <div class="relative flex-shrink-0" onclick="event.stopPropagation(); showServantProfile('${r.id}', '${safeSvc}')">
-                        <img src="${r.imageUrl || 'https://placehold.co/100x100/f1f5f9/CBD5E1?text=👤'}" 
-                             class="w-16 h-16 rounded-2xl object-cover shadow-lg border-2 border-white dark:border-slate-700 bg-white dark:bg-slate-800 group-hover:scale-105 transition-transform duration-500">
-                        <div class="absolute -bottom-1 -left-1 w-6 h-6 rounded-lg bg-white dark:bg-slate-800 shadow-md flex items-center justify-center border border-slate-50 dark:border-slate-700">
-                             <span class="text-[9px] font-black ${palette.text}">${r.absentCount}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="flex-grow min-w-0 pt-1">
-                        <h3 class="font-black text-slate-800 dark:text-slate-50 text-base leading-tight truncate group-hover:text-teal-600 transition-colors" 
-                            onclick="showServantProfile('${r.id}', '${safeSvc}')">
-                            ${val(r.name)}
-                        </h3>
-                        <p class="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tight flex items-center gap-1.5">
-                            <i class="fas fa-map-marker-alt text-slate-300"></i> ${val(r.chapter || 'غير محدد')}
-                        </p>
-                        ${isGS && r.serviceName ? `
-                        <div class="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 text-[8px] font-black border border-teal-100/50 dark:border-teal-800/50">
-                            <i class="fas fa-star text-[7px] opacity-70"></i> ${r.serviceName}
-                        </div>` : ''}
-                    </div>
+            <div class="group flex items-center gap-2.5 p-3 mb-2 rounded-2xl border transition-all hover:scale-[1.005] hover:shadow-sm cursor-pointer ${bgStyle}"
+                 onclick="showServantProfile('${r.id}', '${safeSvc}')">
+                <!-- Rank number -->
+                <div class="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-black ${numBg}">
+                    ${idx}
                 </div>
-
-                <!-- Stats & Progress -->
-                <div class="grid grid-cols-2 gap-3 mb-5">
-                    <div class="${palette.light} p-2 rounded-2xl flex flex-col items-center">
-                        <span class="text-[8px] uppercase tracking-tighter text-slate-400 font-black mb-0.5">مرات الغياب</span>
-                        <span class="text-lg font-black text-slate-800 dark:text-slate-100 leading-none">${r.absentCount}</span>
-                    </div>
-                    <div class="${palette.light} p-2 rounded-2xl flex flex-col items-center">
-                        <span class="text-[8px] uppercase tracking-tighter text-slate-400 font-black mb-0.5">إجمالي الفرص</span>
-                        <span class="text-lg font-black text-slate-800 dark:text-slate-100 leading-none">${r.totalSessions}</span>
-                    </div>
+                <!-- Colored side bar -->
+                <div class="flex-shrink-0 w-1 h-10 rounded-full ${sideBar}"></div>
+                <!-- Name + service -->
+                <div class="flex-1 min-w-0 pr-1">
+                    <p class="font-bold text-slate-800 dark:text-slate-100 text-sm leading-tight break-words whitespace-normal">${r.name}</p>
+                    ${AppState.isGeneralSecretaryMode && r.serviceName ? `<p class="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-0.5">${r.serviceName}</p>` : ''}
                 </div>
-
-                <!-- Progress Bar -->
-                <div class="mb-4">
-                    <div class="flex justify-between items-center mb-1.5 px-0.5">
-                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">معدل الانقطاع</span>
-                        <span class="text-[10px] font-black ${palette.text}">${r.pct}%</span>
-                    </div>
-                    <div class="w-full h-2 bg-slate-100 dark:bg-slate-700/50 rounded-full overflow-hidden p-0.5 border border-white/50 dark:border-transparent">
-                        <div class="h-full rounded-full ${palette.progress} transition-all duration-1000 shadow-sm" style="width: ${r.pct}%"></div>
-                    </div>
+                <!-- Badge -->
+                <div class="flex-shrink-0 flex items-center gap-1.5">
+                    <span class="px-2 py-1 rounded-full text-[11px] font-black ${badgeStyle}">
+                        ${r.absentCount} <span class="font-normal opacity-70">غياب</span>
+                    </span>
+                    <i class="fas fa-chevron-left text-[9px] text-slate-300 dark:text-slate-600 group-hover:text-slate-400 transition-colors"></i>
                 </div>
             </div>
-
-            <!-- Bottom Action Bar -->
-            <div class="bg-slate-50 dark:bg-slate-900/60 p-3 mt-auto border-t border-slate-100 dark:border-slate-800 flex items-center justify-around gap-2">
-                <a href="tel:${mobile}" class="flex-1 h-9 rounded-xl flex items-center justify-center bg-white dark:bg-slate-800 text-slate-500 hover:text-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/30 border border-slate-100 dark:border-slate-700 transition-all shadow-sm ${!mobile ? 'opacity-30 pointer-events-none' : ''}" title="اتصال هاتفي">
-                    <i class="fas fa-phone-alt text-xs"></i>
-                </a>
-                <a href="https://wa.me/${mobile.startsWith('0') ? '2'+mobile : mobile}" target="_blank" class="flex-1 h-9 rounded-xl flex items-center justify-center bg-white dark:bg-slate-800 text-slate-500 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/30 border border-slate-100 dark:border-slate-700 transition-all shadow-sm ${!mobile ? 'opacity-30 pointer-events-none' : ''}" title="واتساب">
-                    <i class="fab fa-whatsapp text-sm"></i>
-                </a>
-                <button onclick="showServantProfile('${r.id}', '${safeSvc}')" class="flex-1 h-9 rounded-xl flex items-center justify-center bg-white dark:bg-slate-800 text-slate-500 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 border border-slate-100 dark:border-slate-700 transition-all shadow-sm" title="الملف الكامل">
-                    <i class="fas fa-id-badge text-xs"></i>
-                </button>
-            </div>
-        </div>`;
+        `;
     };
 
-    if (isGS) {
-        const groups = {};
-        results.forEach(r => { const k = r.serviceName || 'عام'; (groups[k] = groups[k] || []).push(r); });
-        const sortedSvcs = Object.keys(groups).sort((a, b) => {
-            const iA = SERVICES.findIndex(s => s.name === a);
-            const iB = SERVICES.findIndex(s => s.name === b);
-            return (iA === -1 ? 99 : iA) - (iB === -1 ? 99 : iB);
-        });
+    // Sticky summary (stays at top, outside scroll)
+    const summaryHtml = `
+        <div class="sticky top-0 z-10 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm pb-3 mb-2 border-b border-slate-100 dark:border-slate-700">
+            <div class="flex items-center gap-3 pt-1">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm font-black shadow"
+                     style="background: linear-gradient(135deg, #0d9488, #0891b2);">
+                    ${results.length}
+                </div>
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none">إجمالي النتائج</p>
+                    <p class="text-xs font-bold text-slate-600 dark:text-slate-300 mt-0.5">خادم بحاجة للمتابعة</p>
+                </div>
+            </div>
+        </div>
+    `;
 
-        container.innerHTML = `
-            <div class="flex flex-col gap-10 pb-40 max-h-[85vh] overflow-y-auto custom-scrollbar px-2 pt-2">` +
-            sortedSvcs.map(svcName => {
-                const svcConf = SERVICES.find(s => s.name === svcName) || { color: 'teal', icon: 'fa-user-tie' };
-                const clr = colorMap[svcConf.color] || '#0d9488';
-                const list = groups[svcName];
-                if (!list || list.length === 0) return '';
-                
-                return `
-                <div class="animate-in slide-in-from-bottom-4 duration-500">
-                    <div class="flex items-center gap-4 mb-6 sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl py-4 z-10 border-b border-slate-100 dark:border-slate-800 mx-[-8px] px-[8px]">
-                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-xl rotate-3 group-hover:rotate-0 transition-transform"
-                             style="background: linear-gradient(135deg, ${clr}, ${clr}cc)">
-                            <i class="fas ${svcConf.icon} text-xl"></i>
-                        </div>
-                        <div class="flex flex-col">
-                            <span class="font-black text-slate-800 dark:text-white text-lg tracking-tight mb-0.5">${svcName}</span>
-                            <div class="flex items-center gap-2">
-                                <span class="bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 text-[9px] font-black px-2 py-0.5 rounded-full border border-teal-100 dark:border-teal-800">
-                                    ${list.length} خدام متغيبين
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-5 lg:gap-8">
-                        ${list.map(r => buildCard(r)).join('')}
-                    </div>
-                </div>`;
-            }).join('') + `</div>`;
-    } else {
-        container.innerHTML = `
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8 pb-40 max-h-[85vh] overflow-y-auto custom-scrollbar px-2 pt-2 animate-in slide-in-from-bottom-6 duration-700">
-                ${results.map(r => buildCard(r)).join('')}
-            </div>`;
-    }
+    container.innerHTML = `
+        <div class="animate-in fade-in duration-500">
+            ${summaryHtml}
+            <div class="overflow-y-auto custom-scrollbar" style="max-height: 55vh; min-height: 250px; padding-bottom: 24px;">
+                ${results.map((r, i) => buildRow(r, i + 1)).join('')}
+            </div>
+        </div>
+    `;
 }
 
 
@@ -998,3 +1160,370 @@ export function restoreData(e) {
     };
     reader.readAsText(file);
 }
+
+// ─── Service Events ────────────────────────────────────────────────
+
+// Event color map by type
+const EVENT_COLOR_MAP = {
+    'رحلة دينية':   { bg: 'from-blue-500 to-cyan-500',   icon: '🛕', tag: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' },
+    'رحلة ترفيهية': { bg: 'from-green-500 to-teal-500',  icon: '🏕️', tag: 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300' },
+    'يوم روحي':    { bg: 'from-violet-500 to-purple-500', icon: '✨', tag: 'bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300' },
+    'يوم رياضي':   { bg: 'from-orange-500 to-amber-500',  icon: '⚽', tag: 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300' },
+    'اجتماع خدام': { bg: 'from-slate-500 to-slate-600',   icon: '👥', tag: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300' },
+    'ندوة':        { bg: 'from-indigo-500 to-blue-600',   icon: '📚', tag: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' },
+    'حفلة':        { bg: 'from-pink-500 to-rose-500',     icon: '🎉', tag: 'bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-300' },
+    'أخرى':        { bg: 'from-slate-400 to-slate-500',   icon: '📌', tag: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300' },
+};
+
+// Current event being edited for attendance
+let _currentEventId = null;
+
+/** Build a single event card HTML */
+function buildEventCard(ev, total) {
+    const c = EVENT_COLOR_MAP[ev.type] || EVENT_COLOR_MAP['أخرى'];
+    const attendees = ev.attendees || [];
+    const pct = total > 0 ? Math.round((attendees.length / total) * 100) : 0;
+    const dateStr = ev.date
+        ? new Date(ev.date).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' })
+        : '';
+    const safeName = (ev.name || '').replace(/'/g, "\\'");
+    const safeType = (ev.type || 'أخرى');
+
+    return `
+        <div class="group relative flex flex-col items-center justify-center p-4 rounded-xl cursor-pointer shadow-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
+             onclick="window.__openEventAttendance('${ev.id}', '${safeName}', '${safeType}')">
+             
+            <!-- Edit & Delete buttons -->
+            <div class="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                <button onclick="event.stopPropagation(); window.__editServiceEvent('${ev.id}')"
+                        class="w-6 h-6 rounded bg-slate-100 dark:bg-slate-700 hover:bg-blue-500 text-slate-500 hover:text-white flex items-center justify-center transition-colors" title="تعديل">
+                    <i class="fas fa-pen text-[10px]"></i>
+                </button>
+                <button onclick="event.stopPropagation(); window.__deleteServiceEvent('${ev.id}')"
+                        class="w-6 h-6 rounded bg-slate-100 dark:bg-slate-700 hover:bg-red-500 text-slate-500 hover:text-white flex items-center justify-center transition-colors" title="حذف">
+                    <i class="fas fa-trash text-[10px]"></i>
+                </button>
+            </div>
+            
+            <span class="absolute top-2 right-2 text-[8px] font-bold px-1.5 py-0.5 rounded ${c.tag}">${safeType}</span>
+             
+            <!-- Image / Icon Bubble -->
+            <div class="relative w-14 h-14 sm:w-16 sm:h-16 flex flex-shrink-0 items-center justify-center rounded-full mb-3 shadow-inner border border-white/20 bg-gradient-to-br ${c.bg}">
+                ${ev.imageData
+                    ? `<img src="${ev.imageData}" class="absolute inset-0 w-full h-full object-cover rounded-full">`
+                    : `<span class="text-2xl text-white drop-shadow-sm">${c.icon}</span>`}
+                <!-- Attendance Badge -->
+                <span title="نسبة الحضور: ${pct}%" class="absolute -bottom-1 -right-1 bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 text-[9px] sm:text-[10px] font-black rounded-full min-w-[20px] sm:min-w-[22px] h-[20px] sm:h-[22px] flex items-center justify-center shadow-md border border-slate-200 dark:border-slate-600">${attendees.length}</span>
+            </div>
+            
+            <p class="font-bold text-xs sm:text-sm text-center text-slate-800 dark:text-slate-100 w-full truncate mb-1">
+                ${ev.name}
+            </p>
+            <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-bold">
+                ${dateStr} <span class="opacity-50 mx-1">|</span> ${pct}%
+            </p>
+        </div>`;
+}
+
+/** Load and render service events — works for both home section and eventsPage */
+export async function renderServiceEvents(targetContainerId = null) {
+    // Home section
+    const section = document.getElementById('serviceEventsSection');
+    const homeContainer = document.getElementById('serviceEventsContainer');
+    // Events dedicated page
+    const pageContainer = document.getElementById('eventsPageContainer');
+    const eventsPageLink = document.getElementById('eventsPageLink');
+
+    // Hide show events page link based on mode
+    if (AppState.isGeneralSecretaryMode) {
+        section?.classList.add('hidden-view');
+        eventsPageLink?.classList.add('hidden-view');
+        return;
+    }
+
+    section?.classList.remove('hidden-view');
+    eventsPageLink?.classList.remove('hidden-view');
+
+    let events = [];
+    try {
+        await authReady;
+        if (!AppState.isLocalMode) {
+            const snap = await getDocs(collection(AppState.db, 'services', AppState.currentServiceName, 'events'));
+            events = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+        } else {
+            events = JSON.parse(localStorage.getItem(`events-${AppState.currentServiceName}`) || '[]');
+        }
+        events.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    } catch (e) {
+        console.error('renderServiceEvents fetch:', e);
+    }
+
+    const total = AppState.servantsCache?.length || 0;
+    const emptyHtml = `
+        <div class="col-span-full text-center py-16">
+            <div class="w-20 h-20 bg-violet-50 dark:bg-violet-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-star text-3xl text-violet-300 dark:text-violet-600"></i>
+            </div>
+            <p class="font-black text-slate-400 text-base">لا توجد أحداث حتى الآن</p>
+            <p class="text-xs text-slate-400 mt-1 opacity-60">اضغط "إنشاء حدث جديد" لإضافة رحلة أو يوم روحي</p>
+        </div>`;
+
+    const cardsHtml = events.length ? events.map(ev => buildEventCard(ev, total)).join('') : emptyHtml;
+
+    if (homeContainer) homeContainer.innerHTML = cardsHtml;
+    if (pageContainer) pageContainer.innerHTML = cardsHtml;
+}
+
+/** Open the create/edit event modal */
+export async function openCreateEventModal(eventId = null) {
+    const modal = document.getElementById('createServiceEventModal');
+    if (!modal) return;
+    
+    const form = document.getElementById('createServiceEventForm');
+    const preview = document.getElementById('newEventImagePreview');
+    const dateInput = document.getElementById('newEventDate');
+    const titleText = document.getElementById('eventModalTitleText');
+    const editIdInput = document.getElementById('editEventId');
+    
+    if (form) form.reset();
+    if (preview) { preview.src = ''; preview.classList.add('hidden'); }
+    if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+    
+    if (eventId) {
+        if (titleText) titleText.textContent = 'تعديل الحدث';
+        if (editIdInput) editIdInput.value = eventId;
+        
+        // Fetch event data
+        let evData = null;
+        try {
+            if (!AppState.isLocalMode) {
+                const snap = await getDocs(collection(AppState.db, 'services', AppState.currentServiceName, 'events'));
+                evData = snap.docs.find(d => d.id === eventId)?.data();
+            } else {
+                const events = JSON.parse(localStorage.getItem(`events-${AppState.currentServiceName}`) || '[]');
+                evData = events.find(e => e.id === eventId);
+            }
+        } catch(e) { console.error(e); }
+        
+        if (evData) {
+            document.getElementById('newEventName').value = evData.name || '';
+            document.getElementById('newEventDate').value = evData.date || '';
+            document.getElementById('newEventType').value = evData.type || 'أخرى';
+            document.getElementById('newEventDescription').value = evData.description || '';
+            if (evData.imageData) {
+                preview.src = evData.imageData;
+                preview.classList.remove('hidden');
+                // Store existing image data on the preview element so we know it has one
+                preview.dataset.existingImage = evData.imageData;
+            } else {
+                delete preview.dataset.existingImage;
+            }
+        }
+    } else {
+        if (titleText) titleText.textContent = 'إنشاء حدث جديد';
+        if (editIdInput) editIdInput.value = '';
+        if (preview) delete preview.dataset.existingImage;
+    }
+
+    modal.classList.remove('hidden-view');
+    modal.classList.add('flex');
+}
+
+window.__editServiceEvent = function(eventId) {
+    openCreateEventModal(eventId);
+}
+
+/** Save new/edited event to Firebase */
+export async function saveNewServiceEvent() {
+    const name = document.getElementById('newEventName')?.value?.trim();
+    const date = document.getElementById('newEventDate')?.value;
+    const type = document.getElementById('newEventType')?.value;
+    const description = document.getElementById('newEventDescription')?.value?.trim();
+    const imageFile = document.getElementById('newEventImage')?.files?.[0];
+
+    if (!name || !date) { showMessage('يرجى ملء اسم الحدث والتاريخ', true); return; }
+
+    showLoading(true);
+    try {
+        // Convert image to base64 if provided
+        let imageData = null;
+        if (imageFile) {
+            imageData = await new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result);
+                reader.readAsDataURL(imageFile);
+            });
+        }
+
+        const editEventId = document.getElementById('editEventId')?.value;
+        const preview = document.getElementById('newEventImagePreview');
+
+        // If no new file is uploaded but we have an existing image, keep it
+        if (!imageFile && preview && preview.dataset.existingImage) {
+            imageData = preview.dataset.existingImage;
+        }
+
+        if (editEventId) {
+            // Update existing
+            if (!AppState.isLocalMode) {
+                const { doc: fsDoc, updateDoc: fsUpdateDoc } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js');
+                const ref = fsDoc(AppState.db, 'services', AppState.currentServiceName, 'events', editEventId);
+                const updates = { name, date, type: type || 'أخرى', description: description || '' };
+                if (imageData !== null) updates.imageData = imageData;
+                await fsUpdateDoc(ref, updates);
+            } else {
+                const events = JSON.parse(localStorage.getItem(`events-${AppState.currentServiceName}`) || '[]');
+                const idx = events.findIndex(e => e.id === editEventId);
+                if (idx !== -1) {
+                    events[idx] = { ...events[idx], name, date, type: type || 'أخرى', description: description || '' };
+                    if (imageData !== null) events[idx].imageData = imageData;
+                    localStorage.setItem(`events-${AppState.currentServiceName}`, JSON.stringify(events));
+                }
+            }
+            showMessage(`تم تعديل الحدث "${name}" بنجاح ✓`);
+        } else {
+            const eventData = {
+                name, date, type: type || 'أخرى', description: description || '',
+                imageData, attendees: [], createdAt: new Date().toISOString(),
+                serviceName: AppState.currentServiceName
+            };
+
+            let newId = '';
+            if (!AppState.isLocalMode) {
+                const docRef = await addDoc(collection(AppState.db, 'services', AppState.currentServiceName, 'events'), eventData);
+                newId = docRef.id;
+            } else {
+                newId = `local-${Date.now()}`;
+                const events = JSON.parse(localStorage.getItem(`events-${AppState.currentServiceName}`) || '[]');
+                events.push({ ...eventData, id: newId });
+                localStorage.setItem(`events-${AppState.currentServiceName}`, JSON.stringify(events));
+            }
+            showMessage(`تم إنشاء حدث "${name}" بنجاح ✓`);
+            
+            // Immediately populate the activity repot so the new event is included
+            await populateReportActivitySelector();
+            // Automatically select the new event in the Activities Report filter
+            if (document.getElementById('reportActivitySelector')) {
+                document.getElementById('reportActivitySelector').value = `event_${newId}`;
+            }
+        }
+
+        // Close modal and refresh
+        const modal = document.getElementById('createServiceEventModal');
+        if (modal) { modal.classList.add('hidden-view'); modal.classList.remove('flex'); }
+        await renderServiceEvents();
+    } catch (e) {
+        console.error('saveNewServiceEvent:', e);
+        showMessage('فشل في حفظ الحدث', true);
+    } finally {
+        showLoading(false);
+    }
+}
+
+/** Open the event attendance modal */
+export async function openEventAttendanceModal(eventId, eventName, eventType) {
+    _currentEventId = eventId;
+    const modal = document.getElementById('serviceEventAttendanceModal');
+    const titleEl = document.getElementById('eventAttendanceModalTitle');
+    const bodyEl = document.getElementById('eventAttendanceModalBody');
+    if (!modal || !bodyEl) return;
+
+    const c = EVENT_COLOR_MAP[eventType] || EVENT_COLOR_MAP['أخرى'];
+    if (titleEl) titleEl.innerHTML = `<i class="fas fa-clipboard-list text-violet-500"></i> ${c.icon} ${eventName}`;
+
+    // Load event data to get existing attendees
+    let currentAttendees = [];
+    try {
+        if (!AppState.isLocalMode) {
+            const evDoc = await import('./firebase.js').then(m => m.getDoc(import('./firebase.js').then(f => f.doc(AppState.db, 'services', AppState.currentServiceName, 'events', eventId))));
+            // Simplified: fetch from rendered data
+        }
+    } catch (_) {}
+
+    // Get attendees from DOM data (rendered cards stored data)
+    try {
+        const snap = await getDocs(collection(AppState.db, 'services', AppState.currentServiceName, 'events'));
+        const evData = snap.docs.find(d => d.id === eventId)?.data();
+        currentAttendees = evData?.attendees || [];
+    } catch (_) {
+        const events = JSON.parse(localStorage.getItem(`events-${AppState.currentServiceName}`) || '[]');
+        currentAttendees = events.find(e => e.id === eventId)?.attendees || [];
+    }
+
+    const servants = AppState.servantsCache || [];
+    if (!servants.length) {
+        bodyEl.innerHTML = `<p class="text-center text-slate-400 p-8">لا يوجد خدام لعرضهم.</p>`;
+    } else {
+        bodyEl.innerHTML = servants.map(s => {
+            const checked = currentAttendees.includes(s.id);
+            return `
+                <label class="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all
+                       ${checked ? 'bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800' : 'bg-slate-50 dark:bg-slate-800/80 border border-transparent hover:border-slate-200 dark:hover:border-slate-600'}">
+                    <input type="checkbox" value="${s.id}" ${checked ? 'checked' : ''}
+                           class="event-attendee-check w-4 h-4 text-violet-600 rounded border-slate-300 dark:border-slate-600 cursor-pointer"
+                           onchange="this.closest('label').className = this.checked
+                               ? 'flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800'
+                               : 'flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all bg-slate-50 dark:bg-slate-800/80 border border-transparent hover:border-slate-200 dark:hover:border-slate-600'">
+                    <div class="flex-1">
+                        <p class="font-bold text-slate-800 dark:text-slate-100 text-sm">${s.name}</p>
+                        ${s.chapter ? `<p class="text-xs text-slate-400">${s.chapter}</p>` : ''}
+                    </div>
+                    <i class="fas fa-check text-violet-500 text-xs ${checked ? '' : 'opacity-0'} transition-opacity"></i>
+                </label>`;
+        }).join('');
+    }
+
+    modal.classList.remove('hidden-view');
+    modal.classList.add('flex');
+}
+
+/** Save event attendance */
+export async function saveEventAttendance() {
+    if (!_currentEventId) return;
+
+    const checked = [...document.querySelectorAll('.event-attendee-check:checked')].map(cb => cb.value);
+
+    showLoading(true);
+    try {
+        if (!AppState.isLocalMode) {
+            const { doc: fsDoc, updateDoc: fsUpdateDoc } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js');
+            const ref = fsDoc(AppState.db, 'services', AppState.currentServiceName, 'events', _currentEventId);
+            await fsUpdateDoc(ref, { attendees: checked });
+        } else {
+            const events = JSON.parse(localStorage.getItem(`events-${AppState.currentServiceName}`) || '[]');
+            const idx = events.findIndex(e => e.id === _currentEventId);
+            if (idx !== -1) { events[idx].attendees = checked; localStorage.setItem(`events-${AppState.currentServiceName}`, JSON.stringify(events)); }
+        }
+
+        const modal = document.getElementById('serviceEventAttendanceModal');
+        if (modal) { modal.classList.add('hidden-view'); modal.classList.remove('flex'); }
+        showMessage(`تم حفظ حضور ${checked.length} خادم ✓`);
+        await renderServiceEvents();
+    } catch (e) {
+        console.error('saveEventAttendance:', e);
+        showMessage('فشل في حفظ الحضور', true);
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Expose globally for inline onclick
+window.__openEventAttendance = openEventAttendanceModal;
+window.__deleteServiceEvent = async function (eventId) {
+    if (!confirm('هل تريد حذف هذا الحدث؟')) return;
+    showLoading(true);
+    try {
+        if (!AppState.isLocalMode) {
+            const { doc: fsDoc, deleteDoc: fsDeleteDoc } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js');
+            await fsDeleteDoc(fsDoc(AppState.db, 'services', AppState.currentServiceName, 'events', eventId));
+        } else {
+            const events = JSON.parse(localStorage.getItem(`events-${AppState.currentServiceName}`) || '[]');
+            localStorage.setItem(`events-${AppState.currentServiceName}`, JSON.stringify(events.filter(e => e.id !== eventId)));
+        }
+        showMessage('تم حذف الحدث');
+        await renderServiceEvents();
+    } catch (e) {
+        console.error(e);
+        showMessage('فشل في حذف الحدث', true);
+    } finally { showLoading(false); }
+};

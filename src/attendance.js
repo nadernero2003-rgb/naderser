@@ -369,10 +369,36 @@ export function getLastFridayAbsences(servantsCache, attendanceCache) {
     ACTIVITIES.filter(a => a.key !== 'apology').forEach(act => {
         (dayData[act.key]?.attendees || []).forEach(id => allAttendees.add(id));
     });
-    const excusedSet = new Set(dayData['apology']?.attendees || []);
+    const globalExcusedSet = new Set(dayData['apology']?.attendees || []);
 
-    const absent = servantsCache.filter(s => !allAttendees.has(s.id)).map(s => {
-        const isExcused = excusedSet.has(s.id);
+    const absent = servantsCache.filter(s => {
+        if (allAttendees.has(s.id)) return false; // Not absent, they attended something
+
+        // Did their SPECIFIC service get cancelled on this date?
+        let sDayData = attendanceCache[dateStr] || {};
+        if (AppState.isGeneralSecretaryMode && s.serviceName) {
+            const entry = AppState.allAttendanceCache.find(x => x.date === dateStr && x.serviceName === s.serviceName);
+            if (entry) sDayData = entry;
+        }
+
+        // If 'service' (the main activity) is marked as Special or has a note but nobody attended, it's cancelled/no activity.
+        if (sDayData['service']?.isSpecial || sDayData['service']?.note != null) {
+            return false; // Not absent, the service was cancelled or didn't happen
+        }
+
+        return true;
+    }).map(s => {
+        let sDayData = attendanceCache[dateStr] || {};
+        let sExcusedSet = globalExcusedSet;
+        if (AppState.isGeneralSecretaryMode && s.serviceName) {
+            const entry = AppState.allAttendanceCache.find(x => x.date === dateStr && x.serviceName === s.serviceName);
+            if (entry) {
+                sDayData = entry;
+                sExcusedSet = new Set(sDayData['apology']?.attendees || []);
+            }
+        }
+
+        const isExcused = sExcusedSet.has(s.id);
         let consecutiveAbsences = 1;
         
         if (!isExcused) {
@@ -384,7 +410,13 @@ export function getLastFridayAbsences(servantsCache, attendanceCache) {
                 const pm = String(pastDate.getMonth() + 1).padStart(2, '0');
                 const pd = String(pastDate.getDate()).padStart(2, '0');
                 const pDateStr = `${py}-${pm}-${pd}`;
-                const pDayData = attendanceCache[pDateStr] || {};
+                
+                let pDayData = attendanceCache[pDateStr] || {};
+                if (AppState.isGeneralSecretaryMode && s.serviceName) {
+                    const pEntry = AppState.allAttendanceCache.find(x => x.date === pDateStr && x.serviceName === s.serviceName);
+                    if (pEntry) pDayData = pEntry;
+                    else pDayData = {}; // Must reset if empty for this service!
+                }
                 
                 let anyAttendanceThatWeek = false;
                 let servantAttendedThatWeek = false;
@@ -411,9 +443,9 @@ export function getLastFridayAbsences(servantsCache, attendanceCache) {
         return { ...s, isExcused, consecutiveAbsences };
     });
 
-    // Check if the main 'service' activity was cancelled
+    // Check if the main 'service' activity was cancelled (Only applies for specific single service view)
     let serviceCancelledReason = null;
-    if (dayData['service']?.isSpecial) {
+    if (!AppState.isGeneralSecretaryMode && dayData['service']?.isSpecial) {
         serviceCancelledReason = dayData['service'].note;
     }
 
