@@ -128,7 +128,7 @@ function renderServicesGrid() {
     grid.innerHTML = SERVICES.map(svc => {
         const c = COLOR_MAP[svc.color] || COLOR_MAP.teal;
         const badgeId = `service-badge-${svc.name.replace(/\s+/g, '-')}`;
-        
+
         return `
         <div class="service-card group relative flex flex-col items-center justify-center p-5 md:p-6 rounded-2xl cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:scale-[1.03] active:scale-[0.98]"
              data-service="${svc.name}"
@@ -223,7 +223,7 @@ function bindGlobalEvents() {
     DOM.servantImageFile?.addEventListener('change', handleImageSelect);
 
     // --- New Excel Import Events ---
-    document.getElementById('excelFile')?.addEventListener('change', function() {
+    document.getElementById('excelFile')?.addEventListener('change', function () {
         const btn = document.getElementById('importPreviewBtn');
         if (btn) btn.disabled = !this.files.length;
     });
@@ -572,7 +572,7 @@ function bindGlobalEvents() {
     document.getElementById('serviceFilterFollowupDropdown')?.addEventListener('change', (e) => {
         const target = e.target;
         if (!AppState.absenceFilterSelectedServices) AppState.absenceFilterSelectedServices = new Set();
-        
+
         if (target.id === 'service-f-filter-all') {
             const isChecked = target.checked;
             document.querySelectorAll('.service-f-filter-checkbox').forEach(cb => {
@@ -584,7 +584,7 @@ function bindGlobalEvents() {
             const val = target.value;
             if (target.checked) AppState.absenceFilterSelectedServices.add(val);
             else AppState.absenceFilterSelectedServices.delete(val);
-            
+
             const allCb = document.getElementById('service-f-filter-all');
             if (allCb) {
                 const total = document.querySelectorAll('.service-f-filter-checkbox').length;
@@ -593,7 +593,7 @@ function bindGlobalEvents() {
                 allCb.indeterminate = (checked > 0 && checked < total);
             }
         }
-        
+
         const count = AppState.absenceFilterSelectedServices.size;
         const total = document.querySelectorAll('.service-f-filter-checkbox').length;
         const btnText = document.getElementById('serviceFilterFollowupBtnText');
@@ -602,7 +602,7 @@ function bindGlobalEvents() {
             else if (count === total) btnText.textContent = 'كل الخدمات';
             else btnText.textContent = `${count} خدمة محددة`;
         }
-        
+
         generateFollowUpReport();
     });
 
@@ -764,14 +764,14 @@ function initFollowUpPage() {
         const serviceDropdown = document.getElementById('serviceFilterFollowupDropdown');
         if (serviceDropdown && !serviceDropdown.dataset.initialized) {
             serviceDropdown.dataset.initialized = 'true';
-            
+
             const svcNames = SERVICES.filter(s => !s.isGroup).map(s => s.name);
             let dsHtml = `
             <div class="flex items-center p-2 border-b dark:border-slate-700 mb-1 rounded hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                 <input type="checkbox" id="service-f-filter-all" checked class="w-4 h-4 text-teal-600 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 rounded focus:ring-teal-500 ml-2 cursor-pointer">
                 <label for="service-f-filter-all" class="font-black cursor-pointer w-full text-slate-700 dark:text-slate-200">الكل</label>
             </div>`;
-            
+
             svcNames.forEach((svc, index) => {
                 dsHtml += `
                 <div class="flex items-center p-2 rounded hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">

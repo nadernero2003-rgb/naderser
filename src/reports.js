@@ -49,10 +49,10 @@ export async function loadReportsPage() {
 
 export async function populateReportActivitySelector() {
     if (!DOM.reportActivitySelector) return;
-    
+
     // Preserve current selection if any
     const currentVal = DOM.reportActivitySelector.value;
-    
+
     DOM.reportActivitySelector.innerHTML = '<option value="">-- اختر نشاط --</option>';
     ACTIVITIES.filter(a => a.key !== 'apology').forEach(a => {
         DOM.reportActivitySelector.innerHTML += `<option value="${a.key}">${a.name}</option>`;
@@ -68,7 +68,7 @@ export async function populateReportActivitySelector() {
         } else {
             events = JSON.parse(localStorage.getItem(`events-${AppState.currentServiceName}`) || '[]');
         }
-        
+
         if (events.length > 0) {
             events.sort((a, b) => new Date(b.date) - new Date(a.date));
             events.forEach(ev => {
@@ -76,10 +76,10 @@ export async function populateReportActivitySelector() {
             });
             AppState.eventsCacheForReports = events;
         }
-    } catch(e) {
+    } catch (e) {
         console.error('Error loading events for filter:', e);
     }
-    
+
     // Restore previous selection if still exists
     if (currentVal && Array.from(DOM.reportActivitySelector.options).some(o => o.value === currentVal)) {
         DOM.reportActivitySelector.value = currentVal;
@@ -118,7 +118,7 @@ export function populateReportServantSelector(list) {
             src = AppState.allServantsCache.filter(s => s.serviceName === svcFilter);
         }
     }
-    
+
     if (!DOM.reportServantSelector) return;
     DOM.reportServantSelector.innerHTML = '<option value="">-- اختر --</option><option value="all">-- كل الخدام --</option>';
     [...src].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar')).forEach(s => {
@@ -207,8 +207,8 @@ export async function generateReport() {
         if (servantId && servantId !== 'all') {
             filteredServants = servants.filter(s => s.id === servantId);
             if (!filteredServants.length) {
-                 showMessage('هذا الخادم غير موجود في الخدمة المحددة.', true);
-                 return;
+                showMessage('هذا الخادم غير موجود في الخدمة المحددة.', true);
+                return;
             }
         }
         displayComprehensiveReport(attendance, filteredServants, serviceName);
@@ -240,11 +240,11 @@ async function displayIndividualReport(servantId, data, servants) {
         let attended = 0, meetings = 0;
         data.forEach(day => {
             const actData = day[act.key];
-            if (actData && actData.isSpecial) return; 
+            if (actData && actData.isSpecial) return;
             meetings++;
             if (actData?.attendees?.includes(servantId)) attended++;
         });
-        const perc = meetings > 0 ? Math.round((attended/meetings)*100) : 0;
+        const perc = meetings > 0 ? Math.round((attended / meetings) * 100) : 0;
         statsForAi.push({ name: act.name, perc });
         cards += `<div class="p-4 rounded-xl ${getPercentageBGColor(perc)} border-2 border-slate-200 dark:border-slate-700">
             <div class="font-bold text-sm text-slate-600 dark:text-slate-300">${act.name}</div>
@@ -254,7 +254,7 @@ async function displayIndividualReport(servantId, data, servants) {
     });
 
     const totalPercs = statsForAi.map(s => s.perc);
-    const avg = totalPercs.length ? Math.round(totalPercs.reduce((a,b)=>a+b,0)/totalPercs.length) : 0;
+    const avg = totalPercs.length ? Math.round(totalPercs.reduce((a, b) => a + b, 0) / totalPercs.length) : 0;
     cards += `<div class="text-center p-4 rounded-xl bg-indigo-100 dark:bg-indigo-900 border-2 border-indigo-500 col-span-2 md:col-span-1">
         <div class="font-bold text-lg text-indigo-700 dark:text-indigo-300">المتوسط العام</div>
         <div class="text-4xl font-extrabold my-2 text-indigo-600 dark:text-indigo-300">${avg}%</div>
@@ -274,7 +274,7 @@ async function displayIndividualReport(servantId, data, servants) {
 
         const startStr = DOM.reportStartDate?.value;
         const endStr = DOM.reportEndDate?.value;
-        
+
         // Filter events within date range
         let filteredEvents = events;
         if (startStr && endStr) {
@@ -283,16 +283,16 @@ async function displayIndividualReport(servantId, data, servants) {
 
         if (filteredEvents.length > 0) {
             // Sort by date ascending
-            filteredEvents.sort((a,b) => (a.date||'').localeCompare(b.date||''));
+            filteredEvents.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
             let attendedEventsCount = 0;
-            
+
             const eventsRowsHtml = filteredEvents.map(ev => {
                 const attended = ev.attendees && ev.attendees.includes(servantId);
                 if (attended) attendedEventsCount++;
-                const statusHtml = attended 
+                const statusHtml = attended
                     ? `<span class="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-3 py-1 rounded-full font-bold text-xs"><i class="fas fa-check-circle"></i> حضر</span>`
                     : `<span class="bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 px-3 py-1 rounded-full font-bold text-xs"><i class="fas fa-times-circle"></i> لم يحضر</span>`;
-                
+
                 return `
                     <tr class="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                         <td class="p-3 text-sm font-bold">${ev.name}</td>
@@ -326,7 +326,7 @@ async function displayIndividualReport(servantId, data, servants) {
                 </div>
             </div>`;
         }
-    } catch(e) { console.error('Error loading events for report:', e); }
+    } catch (e) { console.error('Error loading events for report:', e); }
 
     const aiSection = `
         <div class="mt-8 pt-6 border-t dark:border-slate-700 text-center">
@@ -351,7 +351,7 @@ async function displayIndividualReport(servantId, data, servants) {
     DOM.reportOutput?.classList.remove('hidden-view');
 
     let lastAiText = '';
-    document.getElementById('aiAnalysisBtn')?.addEventListener('click', async function() {
+    document.getElementById('aiAnalysisBtn')?.addEventListener('click', async function () {
         this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الكتابة...';
         this.disabled = true;
         try {
@@ -380,9 +380,9 @@ function displayAllServantsAvgReport(data, servants, serviceName) {
                 meetings++;
                 if (actData?.attendees?.includes(s.id)) attended++;
             });
-            return meetings > 0 ? Math.round((attended/meetings)*100) : 0;
+            return meetings > 0 ? Math.round((attended / meetings) * 100) : 0;
         });
-        const avg = percs.length ? Math.round(percs.reduce((a,b)=>a+b,0)/percs.length) : 0;
+        const avg = percs.length ? Math.round(percs.reduce((a, b) => a + b, 0) / percs.length) : 0;
         return { ...s, percs, avg };
     }).sort((a, b) => b.avg - a.avg);
 
@@ -419,13 +419,13 @@ function displayComprehensiveReport(data, servants, serviceName) {
                 meetings++;
                 if (actData?.attendees?.includes(s.id)) attended++;
             });
-            return meetings > 0 ? Math.round((attended/meetings)*100) : 0;
+            return meetings > 0 ? Math.round((attended / meetings) * 100) : 0;
         });
-        const avg = percs.length ? Math.round(percs.reduce((a,b)=>a+b,0)/percs.length) : 0;
+        const avg = percs.length ? Math.round(percs.reduce((a, b) => a + b, 0) / percs.length) : 0;
         return { ...s, percs, avg };
     }).sort((a, b) => {
-        const sc = (a.serviceName||'').localeCompare(b.serviceName||'', 'ar');
-        return sc !== 0 ? sc : (a.name||'').localeCompare(b.name||'', 'ar');
+        const sc = (a.serviceName || '').localeCompare(b.serviceName || '', 'ar');
+        return sc !== 0 ? sc : (a.name || '').localeCompare(b.name || '', 'ar');
     });
 
     let table = `<div class="overflow-x-auto rounded-xl border dark:border-slate-700 mb-6">
@@ -443,16 +443,16 @@ function displayComprehensiveReport(data, servants, serviceName) {
         allAvgs.push(r.avg);
         table += `<tr class="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
             <td class="p-3 font-semibold">${r.name}</td>
-            <td class="p-3 text-sm text-slate-500">${r.serviceName||'-'}</td>
+            <td class="p-3 text-sm text-slate-500">${r.serviceName || '-'}</td>
             ${r.percs.map(p => `<td class="p-3 text-center font-bold ${getPercentageTextColor(p)}">${p}%</td>`).join('')}
             <td class="p-3 text-center font-extrabold text-teal-600 dark:text-teal-400 bg-slate-50 dark:bg-slate-800/30">${r.avg}%</td>
         </tr>`;
     });
     table += `</tbody></table></div>`;
 
-    const overallAvg = allAvgs.length ? Math.round(allAvgs.reduce((a,b)=>a+b,0)/allAvgs.length) : 0;
-    const top3 = rows.sort((a,b)=>b.avg-a.avg).slice(0,3).map(r=>r.name);
-    const low3 = rows.sort((a,b)=>a.avg-b.avg).slice(0,3).map(r=>r.name);
+    const overallAvg = allAvgs.length ? Math.round(allAvgs.reduce((a, b) => a + b, 0) / allAvgs.length) : 0;
+    const top3 = rows.sort((a, b) => b.avg - a.avg).slice(0, 3).map(r => r.name);
+    const low3 = rows.sort((a, b) => a.avg - b.avg).slice(0, 3).map(r => r.name);
 
     const aiSection = `
         <div class="mt-6 pt-4 border-t dark:border-slate-700 text-center">
@@ -477,7 +477,7 @@ function displayComprehensiveReport(data, servants, serviceName) {
     DOM.reportOutput?.classList.remove('hidden-view');
 
     let lastAiText2 = '';
-    document.getElementById('aiCompAnalysisBtn')?.addEventListener('click', async function() {
+    document.getElementById('aiCompAnalysisBtn')?.addEventListener('click', async function () {
         this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحليل...';
         this.disabled = true;
         try {
@@ -487,21 +487,21 @@ function displayComprehensiveReport(data, servants, serviceName) {
             document.getElementById('aiCompContent').innerHTML = renderMarkdown(lastAiText2);
             document.getElementById('aiCompResult').classList.remove('hidden-view');
             document.getElementById('aiCompResult').scrollIntoView({ behavior: 'smooth' });
-        } catch(e) { showMessage(e.message||'خطأ في التحليل', true); }
+        } catch (e) { showMessage(e.message || 'خطأ في التحليل', true); }
         finally {
             this.innerHTML = '<i class="fas fa-chart-line text-yellow-300"></i> تحليل التقرير الشامل (AI)';
             this.disabled = false;
         }
     });
-    document.getElementById('shareCompWhatsapp')?.addEventListener('click', ()=>shareWhatsapp(lastAiText2));
-    document.getElementById('saveCompImage')?.addEventListener('click', ()=>exportCardAsImage('aiCompCard','التقرير_الشامل.png'));
+    document.getElementById('shareCompWhatsapp')?.addEventListener('click', () => shareWhatsapp(lastAiText2));
+    document.getElementById('saveCompImage')?.addEventListener('click', () => exportCardAsImage('aiCompCard', 'التقرير_الشامل.png'));
 }
 
 // ─── Activity Report ──────────────────────────────────────────────
 function displayActivityReport(data, servants, serviceName) {
     const actKey = DOM.reportActivitySelector?.value;
     if (!actKey) { showMessage('الرجاء اختيار نشاط', true); return; }
-    
+
     let actName = '';
     let rows = [];
 
@@ -509,7 +509,7 @@ function displayActivityReport(data, servants, serviceName) {
         const eventId = actKey.replace('event_', '');
         const ev = AppState.eventsCacheForReports?.find(e => e.id === eventId);
         if (!ev) { showMessage('تعذر العثور على بيانات النشاط الخاص', true); return; }
-        
+
         actName = ev.name;
         const attendees = ev.attendees || [];
         rows = [{
@@ -797,7 +797,7 @@ export function generatePeriodComparisonReport() {
 
     // AI Period Analysis button
     let lastAiPeriodText = '';
-    document.getElementById('aiPeriodAnalysisBtn')?.addEventListener('click', async function() {
+    document.getElementById('aiPeriodAnalysisBtn')?.addEventListener('click', async function () {
         this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحليل...';
         this.disabled = true;
         try {

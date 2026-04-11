@@ -40,37 +40,51 @@
     <!-- ═══════════════════════════════════════════════════════════
      SERVICES SELECTION (Login Screen)
 ═══════════════════════════════════════════════════════════ -->
-    <div id="loginOrServicesView" class="relative overflow-y-auto overflow-x-hidden min-h-screen flex flex-col items-center justify-start pt-8 md:pt-12 pb-8 px-4" style="background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #0c1a3d 100%);">
-        
+    <div id="loginOrServicesView"
+        class="relative overflow-y-auto overflow-x-hidden min-h-screen flex flex-col items-center justify-start pt-8 md:pt-12 pb-8 px-4"
+        style="background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #0c1a3d 100%);">
+
         <!-- Animated Background Orbs -->
-        <div class="absolute top-[-10%] -left-32 w-80 h-80 bg-teal-500/15 rounded-full filter blur-[120px] animate-pulse"></div>
-        <div class="absolute bottom-[-10%] -right-32 w-80 h-80 bg-indigo-500/15 rounded-full filter blur-[120px] animate-pulse" style="animation-delay: 2s;"></div>
-        <div class="absolute top-1/3 left-1/4 w-64 h-64 bg-purple-500/10 rounded-full filter blur-[100px] animate-pulse" style="animation-delay: 4s;"></div>
+        <div
+            class="absolute top-[-10%] -left-32 w-80 h-80 bg-teal-500/15 rounded-full filter blur-[120px] animate-pulse">
+        </div>
+        <div class="absolute bottom-[-10%] -right-32 w-80 h-80 bg-indigo-500/15 rounded-full filter blur-[120px] animate-pulse"
+            style="animation-delay: 2s;"></div>
+        <div class="absolute top-1/3 left-1/4 w-64 h-64 bg-purple-500/10 rounded-full filter blur-[100px] animate-pulse"
+            style="animation-delay: 4s;"></div>
         <!-- Subtle grid texture -->
-        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CjxwYXRoIGQ9Ik0gNDAgMCBMIDAgMCAwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiIHN0cm9rZS13aWR0aD0iMSIvPgo8L3N2Zz4=')] opacity-60 pointer-events-none"></div>
+        <div
+            class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CjxwYXRoIGQ9Ik0gNDAgMCBMIDAgMCAwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiIHN0cm9rZS13aWR0aD0iMSIvPgo8L3N2Zz4=')] opacity-60 pointer-events-none">
+        </div>
 
         <div class="relative z-10 w-full max-w-5xl flex flex-col items-center">
-            
+
             <!-- Logo using favicon image -->
             <div class="relative mb-5 group">
-                <div class="absolute inset-0 bg-teal-400/25 blur-3xl rounded-full scale-[2] group-hover:scale-[2.5] transition-transform duration-700"></div>
-                <div class="relative w-20 h-20 md:w-24 md:h-24 rounded-[1.75rem] overflow-hidden shadow-2xl border-2 border-white/10 transform rotate-3 hover:rotate-0 transition-all duration-500 cursor-default hover:shadow-teal-500/30 hover:border-teal-400/30">
+                <div
+                    class="absolute inset-0 bg-teal-400/25 blur-3xl rounded-full scale-[2] group-hover:scale-[2.5] transition-transform duration-700">
+                </div>
+                <div
+                    class="relative w-20 h-20 md:w-24 md:h-24 rounded-[1.75rem] overflow-hidden shadow-2xl border-2 border-white/10 transform rotate-3 hover:rotate-0 transition-all duration-500 cursor-default hover:shadow-teal-500/30 hover:border-teal-400/30">
                     <img src="favicon.png" alt="شعار الكنيسة" class="w-full h-full object-cover">
                 </div>
             </div>
 
             <!-- Title & Subtitle -->
-            <h1 class="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-teal-200 via-white to-teal-100 mb-2 text-center tracking-tight drop-shadow-sm">
+            <h1
+                class="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-teal-200 via-white to-teal-100 mb-2 text-center tracking-tight drop-shadow-sm">
                 نظام إدارة الخدمة
             </h1>
-            <p class="text-xs md:text-sm text-slate-400/80 font-bold mb-8 md:mb-10 text-center uppercase tracking-[0.2em] flex items-center justify-center gap-3">
+            <p
+                class="text-xs md:text-sm text-slate-400/80 font-bold mb-8 md:mb-10 text-center uppercase tracking-[0.2em] flex items-center justify-center gap-3">
                 <span class="w-6 md:w-10 h-[1px] bg-gradient-to-r from-transparent to-slate-500"></span>
                 كنيسة مار بولس الرسول بالعبور
                 <span class="w-6 md:w-10 h-[1px] bg-gradient-to-l from-transparent to-slate-500"></span>
             </p>
 
             <!-- Cards Container -->
-            <div id="servicesGrid" class="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5 pb-20"></div>
+            <div id="servicesGrid" class="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5 pb-20">
+            </div>
         </div>
     </div>
 
@@ -85,7 +99,8 @@
                 <div class="flex items-center gap-3">
                     <div
                         class="w-10 h-10 flex items-center justify-center rounded-xl overflow-hidden shadow-lg border border-teal-600/30">
-                        <img src="favicon.png" alt="شعار" class="w-full h-full object-cover"></div>
+                        <img src="favicon.png" alt="شعار" class="w-full h-full object-cover">
+                    </div>
                     <div>
                         <p id="sidebarServiceName" class="sidebar-service-name">خدمة</p>
                         <p class="sidebar-subtitle">نظام الإدارة</p>
@@ -252,18 +267,18 @@
 
                         <!-- Charts Section -->
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                            <div
-                                class="card bg-white dark:bg-slate-800 dark:border-slate-700 p-6 rounded-xl shadow-lg">
-                                <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                            <div class="card bg-white dark:bg-slate-800 dark:border-slate-700 p-6 rounded-xl shadow-lg">
+                                <h2
+                                    class="text-lg font-bold mb-4 flex items-center gap-2 text-slate-700 dark:text-slate-200">
                                     <i class="fas fa-chart-bar text-teal-500"></i> متوسط الحضور (آخر 30 يوم)
                                 </h2>
                                 <div class="relative h-72">
                                     <canvas id="homeAttendanceChart"></canvas>
                                 </div>
                             </div>
-                            <div
-                                class="card bg-white dark:bg-slate-800 dark:border-slate-700 p-6 rounded-xl shadow-lg">
-                                <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                            <div class="card bg-white dark:bg-slate-800 dark:border-slate-700 p-6 rounded-xl shadow-lg">
+                                <h2
+                                    class="text-lg font-bold mb-4 flex items-center gap-2 text-slate-700 dark:text-slate-200">
                                     <i class="fas fa-chart-pie text-indigo-500"></i> نسبة كل نشاط هذا العام
                                 </h2>
                                 <div class="relative h-72">
@@ -275,17 +290,19 @@
                         <!-- Weekly Trend + Insights -->
                         <div id="weeklyTrendSection"
                             class="card bg-white dark:bg-slate-800 dark:border-slate-700 p-6 rounded-xl shadow-lg mb-6">
-                            <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                            <h2
+                                class="text-lg font-bold mb-4 flex items-center gap-2 text-slate-700 dark:text-slate-200">
                                 <i class="fas fa-chart-line text-emerald-500"></i> ملخص الحضور الأسبوعي
                             </h2>
-                            <div id="weeklyTrendContent" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3"></div>
+                            <div id="weeklyTrendContent" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                            </div>
                         </div>
 
                         <!-- Quick Actions + Backup -->
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            <div
-                                class="card bg-white dark:bg-slate-800 dark:border-slate-700 p-6 rounded-xl shadow-lg">
-                                <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                            <div class="card bg-white dark:bg-slate-800 dark:border-slate-700 p-6 rounded-xl shadow-lg">
+                                <h2
+                                    class="text-lg font-bold mb-4 flex items-center gap-2 text-slate-700 dark:text-slate-200">
                                     <i class="fas fa-bolt text-amber-500"></i> إجراءات سريعة
                                 </h2>
                                 <div class="space-y-3">
@@ -303,18 +320,20 @@
                                     </button>
                                 </div>
                             </div>
-                            <div
-                                class="card bg-white dark:bg-slate-800 dark:border-slate-700 p-6 rounded-xl shadow-lg">
-                                <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                            <div class="card bg-white dark:bg-slate-800 dark:border-slate-700 p-6 rounded-xl shadow-lg">
+                                <h2
+                                    class="text-lg font-bold mb-4 flex items-center gap-2 text-slate-700 dark:text-slate-200">
                                     <i class="fas fa-lightbulb text-yellow-500"></i> نصائح الخدمة
                                 </h2>
-                                <div id="serviceTipsContainer" class="space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                                <div id="serviceTipsContainer"
+                                    class="space-y-3 text-sm text-slate-600 dark:text-slate-300">
                                     <!-- Dynamically populated -->
                                 </div>
                             </div>
                             <div id="backupRestoreSection"
                                 class="card bg-white dark:bg-slate-800 dark:border-slate-700 p-6 rounded-xl shadow-lg">
-                                <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                                <h2
+                                    class="text-lg font-bold mb-4 flex items-center gap-2 text-slate-700 dark:text-slate-200">
                                     <i class="fas fa-database text-blue-500"></i> النسخ الاحتياطي
                                 </h2>
                                 <div class="flex flex-col md:flex-row gap-3">
@@ -407,8 +426,7 @@
                 <!-- ════════════════════════════════════════════════════════════
      ATTENDANCE PAGE
 ════════════════════════════════════════════════════════════ -->
-                <section id="attendancePage"
-                    class="page-content hidden-view">
+                <section id="attendancePage" class="page-content hidden-view">
                     <!-- Fixed Header (Flex None) -->
                     <div
                         class="flex-none bg-[#f1f5f9] dark:bg-[#0f172a] pb-2 -mx-6 px-6 pt-2 border-b dark:border-slate-800 shadow-sm">
@@ -525,10 +543,12 @@
                             <span>إنشاء حدث جديد</span>
                         </button>
                     </div>
-                    <div id="eventsPageContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                    <div id="eventsPageContainer"
+                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                         <!-- Populated by JS -->
                         <div class="col-span-full text-center py-20">
-                            <div class="w-20 h-20 bg-violet-50 dark:bg-violet-900/20 rounded-full flex items-center justify-center mx-auto mb-5">
+                            <div
+                                class="w-20 h-20 bg-violet-50 dark:bg-violet-900/20 rounded-full flex items-center justify-center mx-auto mb-5">
                                 <i class="fas fa-star text-3xl text-violet-300"></i>
                             </div>
                             <p class="font-black text-slate-400 text-lg">لا توجد أنشطة خاصة</p>
@@ -653,11 +673,13 @@
                 <section id="eventsPage" class="page-content hidden-view overflow-y-auto">
                     <div class="page-header">
                         <h1 class="page-title"><i class="fas fa-star text-violet-500"></i> الأحداث والأنشطة الخاصة</h1>
-                        <button id="createNewEventBtnPage" class="btn btn-primary" onclick="window.__openCreateEventModal()">
+                        <button id="createNewEventBtnPage" class="btn btn-primary"
+                            onclick="window.__openCreateEventModal()">
                             <i class="fas fa-plus"></i> إنشاء حدث جديد
                         </button>
                     </div>
-                    <div id="eventsPageContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 lg:gap-4">
+                    <div id="eventsPageContainer"
+                        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 lg:gap-4">
                         <!-- Events will be populated here -->
                     </div>
                 </section>
@@ -925,16 +947,21 @@
 
     <!-- ── Settings Password Modal (Professional) ── -->
     <div id="settingsPasswordModal" class="modal-overlay hidden-view">
-        <div class="modal-content max-w-sm overflow-hidden p-0 bg-white dark:bg-slate-900 border-0 shadow-2xl" style="border-radius:24px;">
+        <div class="modal-content max-w-sm overflow-hidden p-0 bg-white dark:bg-slate-900 border-0 shadow-2xl"
+            style="border-radius:24px;">
             <!-- Header with gradient -->
-            <div class="relative px-8 pt-8 pb-6 text-center" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+            <div class="relative px-8 pt-8 pb-6 text-center"
+                style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
                 <!-- Decorative rings -->
                 <div class="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div class="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-10" style="background: radial-gradient(circle, #38bdf8, transparent);"></div>
-                    <div class="absolute -bottom-4 -left-8 w-24 h-24 rounded-full opacity-10" style="background: radial-gradient(circle, #818cf8, transparent);"></div>
+                    <div class="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-10"
+                        style="background: radial-gradient(circle, #38bdf8, transparent);"></div>
+                    <div class="absolute -bottom-4 -left-8 w-24 h-24 rounded-full opacity-10"
+                        style="background: radial-gradient(circle, #818cf8, transparent);"></div>
                 </div>
                 <!-- Lock icon -->
-                <div class="relative mx-auto mb-4 w-16 h-16 rounded-2xl flex items-center justify-center" style="background: linear-gradient(135deg, #0ea5e9, #6366f1); box-shadow: 0 8px 32px rgba(99,102,241,0.4);">
+                <div class="relative mx-auto mb-4 w-16 h-16 rounded-2xl flex items-center justify-center"
+                    style="background: linear-gradient(135deg, #0ea5e9, #6366f1); box-shadow: 0 8px 32px rgba(99,102,241,0.4);">
                     <i class="fas fa-shield-halved text-white text-2xl"></i>
                 </div>
                 <h2 class="text-xl font-black text-white mb-1">المنطقة المحمية</h2>
@@ -944,10 +971,11 @@
             <div class="px-8 py-6">
                 <form id="settingsPasswordForm" onsubmit="return false">
                     <div class="relative mb-4">
-                        <label class="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">كلمة السر</label>
+                        <label
+                            class="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">كلمة
+                            السر</label>
                         <div class="relative">
-                            <input type="password" id="settingsPasswordInput"
-                                placeholder="● ● ● ● ● ●"
+                            <input type="password" id="settingsPasswordInput" placeholder="● ● ● ● ● ●"
                                 class="w-full px-4 py-3.5 pr-12 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white font-bold text-center tracking-[0.5em] text-lg outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
                                 autocomplete="current-password">
                             <button type="button" id="toggleSettingsPwdVisibility"
@@ -955,7 +983,8 @@
                                 <i class="fas fa-eye text-sm"></i>
                             </button>
                         </div>
-                        <p id="settingsPasswordError" class="hidden text-red-500 text-xs font-bold mt-2 text-center animate-pulse">
+                        <p id="settingsPasswordError"
+                            class="hidden text-red-500 text-xs font-bold mt-2 text-center animate-pulse">
                             <i class="fas fa-circle-exclamation ml-1"></i>كلمة السر غير صحيحة!
                         </p>
                     </div>
@@ -965,7 +994,8 @@
                         <i class="fas fa-unlock-keyhole ml-2"></i>فتح الإعدادات
                     </button>
                 </form>
-                <button class="close-modal-btn w-full mt-3 py-2.5 rounded-2xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm font-bold transition-colors hover:bg-slate-100 dark:hover:bg-slate-800">
+                <button
+                    class="close-modal-btn w-full mt-3 py-2.5 rounded-2xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm font-bold transition-colors hover:bg-slate-100 dark:hover:bg-slate-800">
                     <i class="fas fa-times ml-1"></i>إلغاء
                 </button>
             </div>
@@ -976,7 +1006,8 @@
     <div id="createServiceEventModal" class="modal-overlay hidden-view">
         <div class="modal-content max-w-md bg-white dark:bg-slate-800 dark:border-slate-700">
             <button class="close-modal-btn"><i class="fas fa-times"></i></button>
-            <h2 class="modal-title"><i class="fas fa-calendar-plus text-violet-500"></i> <span id="eventModalTitleText">إنشاء حدث جديد</span></h2>
+            <h2 class="modal-title"><i class="fas fa-calendar-plus text-violet-500"></i> <span
+                    id="eventModalTitleText">إنشاء حدث جديد</span></h2>
             <form id="createServiceEventForm">
                 <input type="hidden" id="editEventId">
                 <div class="space-y-4">
@@ -1009,8 +1040,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">صورة الحدث (اختياري)</label>
-                        <input type="file" id="newEventImage" accept="image/*"
-                            class="form-input p-2">
+                        <input type="file" id="newEventImage" accept="image/*" class="form-input p-2">
                         <img id="newEventImagePreview" src="" alt=""
                             class="hidden mt-2 w-full h-32 object-cover rounded-xl shadow-sm">
                     </div>
@@ -1030,13 +1060,13 @@
     <div id="serviceEventAttendanceModal" class="modal-overlay hidden-view">
         <div class="modal-content max-w-lg bg-white dark:bg-slate-800 dark:border-slate-700">
             <button class="close-modal-btn"><i class="fas fa-times"></i></button>
-            <h2 id="eventAttendanceModalTitle" class="modal-title"><i class="fas fa-clipboard-list text-violet-500"></i> تسجيل حضور الحدث</h2>
+            <h2 id="eventAttendanceModalTitle" class="modal-title"><i class="fas fa-clipboard-list text-violet-500"></i>
+                تسجيل حضور الحدث</h2>
             <div id="eventAttendanceModalBody" class="max-h-[55vh] overflow-y-auto custom-scrollbar mt-4 space-y-2">
                 <!-- populated by JS -->
             </div>
             <div class="flex gap-3 mt-6 pt-4 border-t dark:border-slate-700">
-                <button id="saveEventAttendanceBtn"
-                    class="btn flex-1 text-white font-bold"
+                <button id="saveEventAttendanceBtn" class="btn flex-1 text-white font-bold"
                     style="background: linear-gradient(135deg, #7c3aed, #a855f7);">
                     <i class="fas fa-save"></i> حفظ الحضور
                 </button>
@@ -1285,12 +1315,12 @@
         <div class="modal-content max-w-sm bg-white dark:bg-slate-800 dark:border-slate-700">
             <button class="close-modal-btn"><i class="fas fa-times"></i></button>
             <h2 class="modal-title"><i class="fas fa-lock text-teal-500"></i> كلمة سر الإعدادات</h2>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mb-4 text-center">أدخل كلمة السر للوصول إلى الإعدادات</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-4 text-center">أدخل كلمة السر للوصول إلى الإعدادات
+            </p>
             <form id="settingsPasswordForm" onsubmit="return false">
                 <div class="relative mb-3">
                     <input type="password" id="settingsPasswordInput"
-                        class="form-input w-full text-center text-lg tracking-widest pr-12"
-                        placeholder="••••"
+                        class="form-input w-full text-center text-lg tracking-widest pr-12" placeholder="••••"
                         autocomplete="off">
                     <button type="button" id="toggleSettingsPwdVisibility"
                         class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-500 transition-colors p-1">
@@ -1337,10 +1367,15 @@
 
     <!-- ── Activity Attendees Modal (Restored) ── -->
     <div id="activityAttendeesModal" class="modal-overlay hidden-view">
-        <div class="modal-content max-w-md bg-white dark:bg-slate-800 dark:border-slate-700 w-full max-h-[85vh] overflow-hidden flex flex-col p-0">
-            <div class="p-6 pb-4 border-b dark:border-slate-700 flex justify-between items-center bg-teal-600 outline outline-1 outline-teal-600">
-                <h2 id="activityAttendeesModalTitle" class="modal-title text-white font-bold m-0 flex items-center gap-2 text-lg"></h2>
-                <button class="close-modal-btn relative m-0 p-1 text-white opacity-80 hover:opacity-100 hover:bg-white/20 rounded-full transition-colors w-8 h-8 flex items-center justify-center top-auto right-auto text-lg"><i class="fas fa-times"></i></button>
+        <div
+            class="modal-content max-w-md bg-white dark:bg-slate-800 dark:border-slate-700 w-full max-h-[85vh] overflow-hidden flex flex-col p-0">
+            <div
+                class="p-6 pb-4 border-b dark:border-slate-700 flex justify-between items-center bg-teal-600 outline outline-1 outline-teal-600">
+                <h2 id="activityAttendeesModalTitle"
+                    class="modal-title text-white font-bold m-0 flex items-center gap-2 text-lg"></h2>
+                <button
+                    class="close-modal-btn relative m-0 p-1 text-white opacity-80 hover:opacity-100 hover:bg-white/20 rounded-full transition-colors w-8 h-8 flex items-center justify-center top-auto right-auto text-lg"><i
+                        class="fas fa-times"></i></button>
             </div>
             <div id="activityAttendeesModalBody" class="p-6 overflow-y-auto"></div>
         </div>

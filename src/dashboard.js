@@ -40,7 +40,7 @@ export async function showDashboard() {
         DOM.serviceAnnouncementsLink?.classList.toggle('hidden-view', isAdmin);
         DOM.correspondenceCenterLink?.classList.toggle('hidden-view', !isAdmin);
         DOM.announcementsBoardLink?.classList.toggle('hidden-view', !isAdmin);
-        
+
         const eventsLink = document.getElementById('eventsPageLink');
         if (eventsLink) eventsLink.classList.toggle('hidden-view', isAdmin);
 
@@ -180,7 +180,7 @@ function renderServiceKpis(servants, upcoming) {
 
                 let nextBday = new Date(today.getFullYear(), mm - 1, dd);
                 nextBday.setHours(0, 0, 0, 0);
-                
+
                 const todayMidnight = new Date();
                 todayMidnight.setHours(0, 0, 0, 0);
 
@@ -189,10 +189,10 @@ function renderServiceKpis(servants, upcoming) {
                 }
                 const diffTime = Math.abs(nextBday - todayMidnight);
                 const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-                
+
                 const monthNames = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
                 const dateText = `${dd} ${monthNames[mm - 1]}`;
-                
+
                 let dayStr = diffDays === 0 ? "اليوم! 🎉" : `بعد ${diffDays} يوم (${dateText})`;
 
                 return `<li class="flex justify-between items-center text-sm p-3 bg-pink-50 dark:bg-pink-900/20 rounded-lg shadow-sm border border-transparent dark:border-pink-800/30">
@@ -591,7 +591,7 @@ function renderWeeklyTrend(servants, attendanceCache) {
     container.innerHTML = weeklyData.map(w => {
         let displayValue = "";
         let pctColor = "";
-        
+
         if (w.current === null) {
             displayValue = "ملغى";
             pctColor = "text-slate-400 dark:text-slate-500 text-xl";
@@ -599,7 +599,7 @@ function renderWeeklyTrend(servants, attendanceCache) {
             displayValue = w.current + "%";
             pctColor = w.current >= 80 ? 'text-green-600 dark:text-green-400' : w.current >= 60 ? 'text-yellow-600 dark:text-yellow-400' : w.current >= 40 ? 'text-orange-500' : 'text-red-500';
         }
-        
+
         return `
         <div class="p-3 rounded-xl border dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30 text-center transition-all hover:shadow-md">
             <div class="flex items-center justify-center gap-1 mb-2">
@@ -1165,14 +1165,14 @@ export function restoreData(e) {
 
 // Event color map by type
 const EVENT_COLOR_MAP = {
-    'رحلة دينية':   { bg: 'from-blue-500 to-cyan-500',   icon: '🛕', tag: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' },
-    'رحلة ترفيهية': { bg: 'from-green-500 to-teal-500',  icon: '🏕️', tag: 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300' },
-    'يوم روحي':    { bg: 'from-violet-500 to-purple-500', icon: '✨', tag: 'bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300' },
-    'يوم رياضي':   { bg: 'from-orange-500 to-amber-500',  icon: '⚽', tag: 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300' },
-    'اجتماع خدام': { bg: 'from-slate-500 to-slate-600',   icon: '👥', tag: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300' },
-    'ندوة':        { bg: 'from-indigo-500 to-blue-600',   icon: '📚', tag: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' },
-    'حفلة':        { bg: 'from-pink-500 to-rose-500',     icon: '🎉', tag: 'bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-300' },
-    'أخرى':        { bg: 'from-slate-400 to-slate-500',   icon: '📌', tag: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300' },
+    'رحلة دينية': { bg: 'from-blue-500 to-cyan-500', icon: '🛕', tag: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' },
+    'رحلة ترفيهية': { bg: 'from-green-500 to-teal-500', icon: '🏕️', tag: 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300' },
+    'يوم روحي': { bg: 'from-violet-500 to-purple-500', icon: '✨', tag: 'bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300' },
+    'يوم رياضي': { bg: 'from-orange-500 to-amber-500', icon: '⚽', tag: 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300' },
+    'اجتماع خدام': { bg: 'from-slate-500 to-slate-600', icon: '👥', tag: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300' },
+    'ندوة': { bg: 'from-indigo-500 to-blue-600', icon: '📚', tag: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' },
+    'حفلة': { bg: 'from-pink-500 to-rose-500', icon: '🎉', tag: 'bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-300' },
+    'أخرى': { bg: 'from-slate-400 to-slate-500', icon: '📌', tag: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300' },
 };
 
 // Current event being edited for attendance
@@ -1210,8 +1210,8 @@ function buildEventCard(ev, total) {
             <!-- Image / Icon Bubble -->
             <div class="relative w-14 h-14 sm:w-16 sm:h-16 flex flex-shrink-0 items-center justify-center rounded-full mb-3 shadow-inner border border-white/20 bg-gradient-to-br ${c.bg}">
                 ${ev.imageData
-                    ? `<img src="${ev.imageData}" class="absolute inset-0 w-full h-full object-cover rounded-full">`
-                    : `<span class="text-2xl text-white drop-shadow-sm">${c.icon}</span>`}
+            ? `<img src="${ev.imageData}" class="absolute inset-0 w-full h-full object-cover rounded-full">`
+            : `<span class="text-2xl text-white drop-shadow-sm">${c.icon}</span>`}
                 <!-- Attendance Badge -->
                 <span title="نسبة الحضور: ${pct}%" class="absolute -bottom-1 -right-1 bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 text-[9px] sm:text-[10px] font-black rounded-full min-w-[20px] sm:min-w-[22px] h-[20px] sm:h-[22px] flex items-center justify-center shadow-md border border-slate-200 dark:border-slate-600">${attendees.length}</span>
             </div>
@@ -1278,21 +1278,21 @@ export async function renderServiceEvents(targetContainerId = null) {
 export async function openCreateEventModal(eventId = null) {
     const modal = document.getElementById('createServiceEventModal');
     if (!modal) return;
-    
+
     const form = document.getElementById('createServiceEventForm');
     const preview = document.getElementById('newEventImagePreview');
     const dateInput = document.getElementById('newEventDate');
     const titleText = document.getElementById('eventModalTitleText');
     const editIdInput = document.getElementById('editEventId');
-    
+
     if (form) form.reset();
     if (preview) { preview.src = ''; preview.classList.add('hidden'); }
     if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
-    
+
     if (eventId) {
         if (titleText) titleText.textContent = 'تعديل الحدث';
         if (editIdInput) editIdInput.value = eventId;
-        
+
         // Fetch event data
         let evData = null;
         try {
@@ -1303,8 +1303,8 @@ export async function openCreateEventModal(eventId = null) {
                 const events = JSON.parse(localStorage.getItem(`events-${AppState.currentServiceName}`) || '[]');
                 evData = events.find(e => e.id === eventId);
             }
-        } catch(e) { console.error(e); }
-        
+        } catch (e) { console.error(e); }
+
         if (evData) {
             document.getElementById('newEventName').value = evData.name || '';
             document.getElementById('newEventDate').value = evData.date || '';
@@ -1329,7 +1329,7 @@ export async function openCreateEventModal(eventId = null) {
     modal.classList.add('flex');
 }
 
-window.__editServiceEvent = function(eventId) {
+window.__editServiceEvent = function (eventId) {
     openCreateEventModal(eventId);
 }
 
@@ -1399,7 +1399,7 @@ export async function saveNewServiceEvent() {
                 localStorage.setItem(`events-${AppState.currentServiceName}`, JSON.stringify(events));
             }
             showMessage(`تم إنشاء حدث "${name}" بنجاح ✓`);
-            
+
             // Immediately populate the activity repot so the new event is included
             await populateReportActivitySelector();
             // Automatically select the new event in the Activities Report filter
@@ -1438,7 +1438,7 @@ export async function openEventAttendanceModal(eventId, eventName, eventType) {
             const evDoc = await import('./firebase.js').then(m => m.getDoc(import('./firebase.js').then(f => f.doc(AppState.db, 'services', AppState.currentServiceName, 'events', eventId))));
             // Simplified: fetch from rendered data
         }
-    } catch (_) {}
+    } catch (_) { }
 
     // Get attendees from DOM data (rendered cards stored data)
     try {

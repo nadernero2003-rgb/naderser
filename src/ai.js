@@ -116,11 +116,11 @@ export async function generateContent(prompt) {
             const discoveryRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
             if (discoveryRes.ok) {
                 const discoveryData = await discoveryRes.json();
-                const availableGemini = discoveryData.models?.filter(m => 
-                    m.supportedGenerationMethods?.includes('generateContent') && 
+                const availableGemini = discoveryData.models?.filter(m =>
+                    m.supportedGenerationMethods?.includes('generateContent') &&
                     m.name.includes('gemini')
                 );
-                
+
                 if (availableGemini && availableGemini.length > 0) {
                     const dynamicModelName = availableGemini[0].name.replace('models/', '');
                     console.log(`[AI] Discovered model: ${dynamicModelName}, trying it...`);
