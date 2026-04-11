@@ -281,7 +281,8 @@ body.dark {
     overflow-y: auto;
     overflow-x: hidden;
     animation: fadeIn 0.15s ease-out;
-    padding-bottom: 5rem; /* Protect bottom area */
+    padding-bottom: 5rem;
+    /* Protect bottom area */
 }
 
 .page-content:not(.hidden-view) {
@@ -292,7 +293,8 @@ body.dark {
 #attendancePage.page-content:not(.hidden-view) {
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* Parent hides overflow; child div handles scrolling */
+    overflow: hidden;
+    /* Parent hides overflow; child div handles scrolling */
     padding-bottom: 0;
 }
 

@@ -69,8 +69,8 @@ export function renderServiceBulletinBoard(announcements) {
 
 function buildNoteCard(ann) {
     const ts = ann.timestamp?.toDate?.()?.toLocaleDateString('ar-EG') || '';
-    const colors = ['#fffde7','#e8f5e9','#fce4ec','#e3f2fd','#f3e5f5'];
-    const rotations = ['rotate-1','-rotate-1','rotate-2','-rotate-2','rotate-0'];
+    const colors = ['#fffde7', '#e8f5e9', '#fce4ec', '#e3f2fd', '#f3e5f5'];
+    const rotations = ['rotate-1', '-rotate-1', 'rotate-2', '-rotate-2', 'rotate-0'];
     const ri = Math.floor(Math.random() * colors.length);
     return `
         <div class="announcement-note relative p-5 rounded-lg ${rotations[ri]} m-2" style="background:${colors[ri]}">
@@ -355,7 +355,7 @@ export async function updateServiceCardBadges() {
             const notesCol = collection(AppState.db, 'notesToAdmin');
             const notesSnap = await getDocs(query(notesCol, where('isRead', '==', false)));
             const unreadNotesCount = notesSnap.size;
-            
+
             // Store globally
             AppState.unreadNotesCount = unreadNotesCount;
 
