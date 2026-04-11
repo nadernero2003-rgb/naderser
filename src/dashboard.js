@@ -441,32 +441,51 @@ window.openActivityModal = function (actKey, dateStr) {
     } else {
         const attendeesFull = attendeeIds.map(id => servantsList.find(x => x.id === id) || { id, name: 'خادم غير معروف', chapter: 'غير محدد' });
 
-        // Group by Service and sort by config.SERVICES order
+        // Group by Service (GS mode) or Chapter (Regular mode)
         const groups = {};
         attendeesFull.forEach(s => {
-            const svc = s.serviceName || 'عام';
-            if (!groups[svc]) groups[svc] = [];
-            groups[svc].push(s);
+            const groupKey = isGeneralSecretaryMode ? (s.serviceName || 'عام') : (s.chapter || 'بدون فصل');
+            if (!groups[groupKey]) groups[groupKey] = [];
+            groups[groupKey].push(s);
         });
 
-        const sortedSvcNames = Object.keys(groups).sort((a, b) => {
-            const idxA = SERVICES.findIndex(s => s.name === a);
-            const idxB = SERVICES.findIndex(s => s.name === b);
-            if (idxA === -1) return 1;
-            if (idxB === -1) return -1;
-            return idxA - idxB;
+        const sortedGroupKeys = Object.keys(groups).sort((a, b) => {
+            if (isGeneralSecretaryMode) {
+                const idxA = SERVICES.findIndex(s => s.name === a);
+                const idxB = SERVICES.findIndex(s => s.name === b);
+                if (idxA === -1) return 1;
+                if (idxB === -1) return -1;
+                return idxA - idxB;
+            } else {
+                if (a === 'بدون فصل') return 1;
+                if (b === 'بدون فصل') return -1;
+                return a.localeCompare(b, 'ar');
+            }
         });
 
-        const html = sortedSvcNames.map((svcName, idx) => {
-            const list = groups[svcName];
-            const svcConfig = SERVICES.find(s => s.name === svcName) || { color: 'teal' };
+        const dynamicColors = ['blue', 'green', 'violet', 'orange', 'pink', 'indigo', 'rose', 'teal', 'cyan', 'amber'];
+
+        const html = sortedGroupKeys.map((groupName, idx) => {
+            const list = groups[groupName];
+            
+            let colorKey, icon, borderStr;
+            if (isGeneralSecretaryMode) {
+                const svcConfig = SERVICES.find(s => s.name === groupName) || {};
+                colorKey = svcConfig.color || 'slate';
+                icon = svcConfig.icon || 'fa-users';
+                borderStr = svcConfig.border || '#ccc';
+            } else {
+                colorKey = dynamicColors[idx % dynamicColors.length];
+                icon = 'fa-users-class';
+                borderStr = 'transparent';
+            }
 
             let htmlChunk = `
                 <div class="mb-6">
                     <div class="flex items-center gap-2 mb-3">
-                        <span class="px-3 py-1 text-sm font-bold rounded-lg border shadow-sm" 
-                              style="background: var(--card-bg); border-color: ${svcConfig.border || '#ccc'}; color: ${svcConfig.icon || '#333'}">
-                            ${svcName}
+                        <span class="px-3 py-1 text-sm font-bold rounded-lg border shadow-sm ${isGeneralSecretaryMode ? '' : `bg-${colorKey}-100 dark:bg-${colorKey}-900/30 text-${colorKey}-700 dark:text-${colorKey}-300`}" 
+                              style="${isGeneralSecretaryMode ? `background: var(--card-bg); border-color: ${borderStr};` : ''}">
+                            ${isGeneralSecretaryMode ? '' : `<i class="fas fa-users ml-1 text-${colorKey}-500"></i>`} ${groupName}
                         </span>
                         <div class="flex-1 h-px bg-slate-200 dark:bg-slate-700"></div>
                     </div>
@@ -474,10 +493,9 @@ window.openActivityModal = function (actKey, dateStr) {
             `;
 
             const listHtml = list.map(s => {
-                const status = getServantHistoryStatusForDate(s.id, dateStr, cacheToUse);
+                const status = window.getServantHistoryStatusForDate ? window.getServantHistoryStatusForDate(s.id, dateStr, cacheToUse) : null;
 
-                // Fixed: Define colorClass derived from serviceConfig
-                const bgClass = svcConfig.color ? `bg-${svcConfig.color}-50 dark:bg-${svcConfig.color}-900/10 border-${svcConfig.color}-200 dark:border-${svcConfig.color}-800` : 'bg-slate-50 dark:bg-slate-800 border-slate-200';
+                const bgClass = `bg-${colorKey}-50 dark:bg-${colorKey}-900/10 border-${colorKey}-200 dark:border-${colorKey}-800`;
                 let badgeHtml = "";
 
                 // Show status label if consecutive absences (no background override)
@@ -487,10 +505,10 @@ window.openActivityModal = function (actKey, dateStr) {
                     badgeHtml = `<span class="text-[0.6rem] font-bold px-1.5 py-0.5 rounded-full bg-slate-500/10 dark:bg-slate-500/20 text-slate-600 dark:text-slate-400 border border-slate-500/20 ml-auto"><i class="fas fa-bed ml-1"></i>معتذر</span>`;
                 }
 
-                // Check explanation history for the last 30 days
+                // Check explanation history for the last 30 days when viewing PREPARATION activity
                 let explanationHistoryHtml = "";
                 let explanationDatesHtml = "";
-                if (actKey === 'explanation') {
+                if (actKey === 'preparation') {
                     let expDates = [];
                     const targetDate = new Date(dateStr);
                     Object.keys(cacheToUse).forEach(k => {
@@ -509,11 +527,13 @@ window.openActivityModal = function (actKey, dateStr) {
                         explanationHistoryHtml = `<button onclick="document.getElementById('${toggleId}').classList.toggle('hidden')" class="text-[0.65rem] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800 mr-2 hover:bg-blue-200 transition text-right"><i class="fas fa-rotate-left mr-1"></i> شرح ${expDates.length}× قريباً <i class="fas fa-chevron-down text-[10px] ml-1"></i></button>`;
 
                         explanationDatesHtml = `<div id="${toggleId}" class="hidden w-full mt-2 text-xs bg-white dark:bg-slate-800/50 p-2 rounded border border-blue-100 dark:border-blue-900/50">
-                            <strong class="text-blue-800 dark:text-blue-300">تواريخ الشرح السابقة:</strong>
+                            <strong class="text-blue-800 dark:text-blue-300">تواريخ الشرح السابقة (30 يوم):</strong>
                             <ul class="list-disc list-inside mt-1 text-slate-600 dark:text-slate-300 text-[11px]">
                                 ${expDates.sort().reverse().map(d => `<li>${d}</li>`).join('')}
                             </ul>
                         </div>`;
+                    } else {
+                        explanationHistoryHtml = `<span class="text-[0.65rem] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700 mr-2"><i class="fas fa-exclamation-circle mr-1"></i> لم يشرح مؤخراً</span>`;
                     }
                 }
 

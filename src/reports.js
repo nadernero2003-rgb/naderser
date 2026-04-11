@@ -454,12 +454,20 @@ function displayComprehensiveReport(data, servants, serviceName) {
     const top3 = rows.sort((a, b) => b.avg - a.avg).slice(0, 3).map(r => r.name);
     const low3 = rows.sort((a, b) => a.avg - b.avg).slice(0, 3).map(r => r.name);
 
+    const targetActsHeaders = targetActs.map(a => a.name);
+    
     const aiSection = `
-        <div class="mt-6 pt-4 border-t dark:border-slate-700 text-center">
-            <button id="aiCompAnalysisBtn"
-                class="bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all hover:scale-105 inline-flex items-center gap-2">
-                <i class="fas fa-chart-line text-yellow-300"></i> تحليل التقرير الشامل (AI)
-            </button>
+        <div class="mt-6 pt-4 border-t dark:border-slate-700 justify-center">
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <button id="exportCompExcelBtn"
+                    class="bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-700 hover:to-indigo-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all hover:scale-105 inline-flex items-center gap-2">
+                    <i class="fas fa-file-excel"></i> تصدير إكسيل
+                </button>
+                <button id="aiCompAnalysisBtn"
+                    class="bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all hover:scale-105 inline-flex items-center gap-2">
+                    <i class="fas fa-chart-line text-yellow-300"></i> تحليل التقرير الشامل (AI)
+                </button>
+            </div>
             <div id="aiCompResult" class="hidden-view mt-6 text-right max-w-2xl mx-auto">
                 <div id="aiCompCard" class="bg-white dark:bg-slate-800 p-6 rounded-2xl border shadow-2xl relative">
                     <div class="absolute -top-3 -right-3 text-4xl">📊</div>
@@ -475,6 +483,23 @@ function displayComprehensiveReport(data, servants, serviceName) {
 
     DOM.reportContent.innerHTML = reportHeader('التقرير الشامل', serviceName) + table + aiSection;
     DOM.reportOutput?.classList.remove('hidden-view');
+
+    (function BindExportExcel() {
+        document.getElementById('exportCompExcelBtn')?.addEventListener('click', () => {
+            const header = ['الخادم', 'الخدمة', ...targetActsHeaders, 'المتوسط'];
+            const excelRows = [header, ...rows.map(r => [
+                r.name, 
+                r.serviceName || '-', 
+                ...r.percs.map(p => p + '%'), 
+                r.avg + '%'
+            ])];
+            
+            const wb = window.XLSX.utils.book_new();
+            const ws = window.XLSX.utils.aoa_to_sheet(excelRows);
+            window.XLSX.utils.book_append_sheet(wb, ws, 'التقرير_الشامل');
+            window.XLSX.writeFile(wb, 'التقرير_الشامل.xlsx');
+        });
+    })();
 
     let lastAiText2 = '';
     document.getElementById('aiCompAnalysisBtn')?.addEventListener('click', async function () {
