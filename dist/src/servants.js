@@ -153,10 +153,10 @@ export async function renderServantsTable(source = null) {
 
             const actionsBtns = isAdmin ? '' :
                 ('<td class="p-4 text-center">' +
-                '<div class="flex justify-center gap-2">' +
-                '<button class="edit-btn text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 w-8 h-8 rounded-lg transition-all" data-id="' + s.id + '"><i class="fas fa-edit"></i></button>' +
-                '<button class="delete-btn text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 w-8 h-8 rounded-lg transition-all" data-id="' + s.id + '"><i class="fas fa-trash"></i></button>' +
-                '</div></td>');
+                    '<div class="flex justify-center gap-2">' +
+                    '<button class="edit-btn text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 w-8 h-8 rounded-lg transition-all" data-id="' + s.id + '"><i class="fas fa-edit"></i></button>' +
+                    '<button class="delete-btn text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 w-8 h-8 rounded-lg transition-all" data-id="' + s.id + '"><i class="fas fa-trash"></i></button>' +
+                    '</div></td>');
             return '<tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b dark:border-slate-700 last:border-0">' +
                 '<td class="p-4 text-center font-bold text-slate-400 text-xs">' + (i + 1) + '</td>' +
                 '<td class="p-4 flex justify-center">' + imgHtml + '</td>' +
@@ -215,9 +215,9 @@ export async function renderServantsTable(source = null) {
                 // GS mode: no edit/delete buttons on cards
                 (isAdmin ? '' :
                     ('<div class="absolute top-4 left-4 flex gap-2">' +
-                    '<button class="edit-btn bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-500 hover:text-white w-8 h-8 rounded-full transition-colors flex items-center justify-center shadow-sm" data-id="' + s.id + '" title="تعديل"><i class="fas fa-edit"></i></button>' +
-                    '<button class="delete-btn bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white w-8 h-8 rounded-full transition-colors flex items-center justify-center shadow-sm" data-id="' + s.id + '" title="حذف"><i class="fas fa-trash"></i></button>' +
-                    '</div>')
+                        '<button class="edit-btn bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-500 hover:text-white w-8 h-8 rounded-full transition-colors flex items-center justify-center shadow-sm" data-id="' + s.id + '" title="تعديل"><i class="fas fa-edit"></i></button>' +
+                        '<button class="delete-btn bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white w-8 h-8 rounded-full transition-colors flex items-center justify-center shadow-sm" data-id="' + s.id + '" title="حذف"><i class="fas fa-trash"></i></button>' +
+                        '</div>')
                 ) +
                 '</div>';
         }).join('');
@@ -421,7 +421,7 @@ export async function processExcelPreview() {
 
         const result = dataRows.map((r, idx) => {
             if (!r[map.name] || String(r[map.name]).trim() === '') return null; // Skip empty names silently
-            
+
             const item = {
                 name: String(r[map.name]).trim(),
                 mobile: map.mobile !== -1 && r[map.mobile] ? String(r[map.mobile]).trim() : '',
@@ -448,7 +448,7 @@ export async function processExcelPreview() {
 
         AppState.pendingImport = result;
         renderImportPreview();
-        
+
         // UI Switch
         document.getElementById('importStep1').classList.add('hidden-view');
         document.getElementById('importStep2').classList.remove('hidden-view');
@@ -472,10 +472,10 @@ function renderImportPreview() {
     }
 
     tbody.innerHTML = AppState.pendingImport.map((item, idx) => {
-        const statusIcon = item.isValid 
-            ? '<i class="fas fa-check-circle text-green-500"></i>' 
+        const statusIcon = item.isValid
+            ? '<i class="fas fa-check-circle text-green-500"></i>'
             : '<i class="fas fa-exclamation-circle text-red-500" title="' + item.errors.join(', ') + '"></i>';
-        
+
         const rowClass = item.isValid ? '' : 'bg-red-50 dark:bg-red-900/10';
 
         return `
@@ -507,7 +507,7 @@ export async function commitExcelImport() {
         await Promise.all(batch);
         showMessage(`تم استيراد ${validData.length} خادم بنجاح ✓`);
         closeModal(document.getElementById('importModal'));
-        
+
         // Reset Modal UI for next time
         document.getElementById('importStep1').classList.remove('hidden-view');
         document.getElementById('importStep2').classList.add('hidden-view');

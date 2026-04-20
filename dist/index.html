@@ -1,25 +1,36 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" prefix="og: http://ogp.me/ns#">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة خدمة ابتدائي</title>
+    <title>خدمتي - إدارة الخدمة</title>
     <meta name="description" content="نظام متكامل لإدارة خدمة الكنيسة - حضور الخدام والتقارير والإعلانات">
+    <meta name="theme-color" content="#0ea5e9">
+    
+    <meta property="og:title" content="خدمتي - إدارة الخدمة">
+    <meta property="og:description" content="البوابة الرقمية لإدارة خدمة الكنيسة - الافتقاد، الأنشطة، وتقارير الخدام">
+    <meta property="og:image" content="https://animated-licorice-5f8327.netlify.app/app-icon.png">
+    <meta property="og:image:secure_url" content="https://animated-licorice-5f8327.netlify.app/app-icon.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="300">
+    <meta property="og:image:height" content="300">
+    <meta property="og:url" content="https://animated-licorice-5f8327.netlify.app/">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta itemprop="image" content="https://animated-licorice-5f8327.netlify.app/app-icon.png">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json">
+    
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="apple-touch-icon" href="favicon.png">
+    <link rel="icon" type="image/png" href="app-icon.png">
+    <link rel="apple-touch-icon" href="app-icon.png">
     <!-- Styles -->
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Tailwind CDN for utility classes -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
         // Dark mode is applied ONLY inside the dashboard.
         // The services/login screen always stays in light mode.
@@ -42,31 +53,45 @@
 ═══════════════════════════════════════════════════════════ -->
     <div id="loginOrServicesView"
         class="relative overflow-y-auto overflow-x-hidden min-h-screen flex flex-col items-center justify-start pt-8 md:pt-12 pb-8 px-4"
-        style="background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #0c1a3d 100%);">
+        style="background: linear-gradient(160deg, #020617 0%, #0a1628 30%, #0f172a 50%, #0c1a3d 80%, #0d1117 100%);">
 
         <!-- Animated Background Orbs -->
         <div
-            class="absolute top-[-10%] -left-32 w-80 h-80 bg-teal-500/15 rounded-full filter blur-[120px] animate-pulse">
+            class="absolute top-[-10%] -left-32 w-96 h-96 bg-teal-500/12 rounded-full filter blur-[140px] animate-pulse">
         </div>
-        <div class="absolute bottom-[-10%] -right-32 w-80 h-80 bg-indigo-500/15 rounded-full filter blur-[120px] animate-pulse"
+        <div class="absolute bottom-[-10%] -right-32 w-96 h-96 bg-indigo-500/12 rounded-full filter blur-[140px] animate-pulse"
             style="animation-delay: 2s;"></div>
-        <div class="absolute top-1/3 left-1/4 w-64 h-64 bg-purple-500/10 rounded-full filter blur-[100px] animate-pulse"
+        <div class="absolute top-1/2 left-1/3 w-72 h-72 bg-amber-500/6 rounded-full filter blur-[120px] animate-pulse"
             style="animation-delay: 4s;"></div>
+
         <!-- Subtle grid texture -->
         <div
             class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CjxwYXRoIGQ9Ik0gNDAgMCBMIDAgMCAwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiIHN0cm9rZS13aWR0aD0iMSIvPgo8L3N2Zz4=')] opacity-60 pointer-events-none">
         </div>
 
+        <!-- Decorative cross watermark -->
+        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/4 opacity-[0.02] pointer-events-none select-none"
+            style="font-size: 20rem; line-height: 1; color: white;">✝</div>
+
+        <!-- Floating sparkles -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute w-1.5 h-1.5 bg-teal-300/30 rounded-full" style="top: 15%; left: 20%; animation: float 6s ease-in-out infinite;"></div>
+            <div class="absolute w-1 h-1 bg-amber-300/25 rounded-full" style="top: 35%; right: 15%; animation: float 8s ease-in-out infinite; animation-delay: 1s;"></div>
+            <div class="absolute w-1.5 h-1.5 bg-white/15 rounded-full" style="top: 65%; left: 10%; animation: float 7s ease-in-out infinite; animation-delay: 3s;"></div>
+            <div class="absolute w-1 h-1 bg-teal-200/20 rounded-full" style="top: 80%; right: 25%; animation: float 9s ease-in-out infinite; animation-delay: 2s;"></div>
+        </div>
+        <style>@keyframes float { 0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; } 50% { transform: translateY(-20px) scale(1.5); opacity: 0.8; } }</style>
+
         <div class="relative z-10 w-full max-w-5xl flex flex-col items-center">
 
-            <!-- Logo using favicon image -->
+            <!-- Logo using app icon -->
             <div class="relative mb-5 group">
                 <div
                     class="absolute inset-0 bg-teal-400/25 blur-3xl rounded-full scale-[2] group-hover:scale-[2.5] transition-transform duration-700">
                 </div>
                 <div
                     class="relative w-20 h-20 md:w-24 md:h-24 rounded-[1.75rem] overflow-hidden shadow-2xl border-2 border-white/10 transform rotate-3 hover:rotate-0 transition-all duration-500 cursor-default hover:shadow-teal-500/30 hover:border-teal-400/30">
-                    <img src="favicon.png" alt="شعار الكنيسة" class="w-full h-full object-cover">
+                    <img src="app-icon.png" alt="شعار التطبيق" class="w-full h-full object-cover">
                 </div>
             </div>
 
@@ -152,6 +177,14 @@
                     href="#">
                     <i class="fas fa-broadcast-tower"></i><span>إرسال إعلانات</span>
                 </a>
+                <a id="userManagementLink" class="sidebar-link hidden-view" data-page="userManagementPage"
+                    href="#">
+                    <i class="fas fa-users-cog"></i><span>إدارة المستخدمين</span>
+                </a>
+                <div class="my-2 border-t border-slate-700/50"></div>
+                <button id="backToServices" class="sidebar-link w-full text-right text-orange-400 hover:text-orange-300">
+                    <i class="fas fa-arrow-right-from-bracket"></i><span>تغيير الخدمة</span>
+                </button>
             </nav>
 
             <!-- Footer -->
@@ -168,9 +201,6 @@
                         </div>
                     </div>
                 </label>
-                <button id="backToServices" class="sidebar-link w-full text-right">
-                    <i class="fas fa-arrow-left"></i><span>تغيير الخدمة</span>
-                </button>
             </div>
         </aside>
 
@@ -257,7 +287,7 @@
                         <!-- Activity Status Cards (colored, clickable) -->
                         <div id="activityStatusCard"
                             class="card bg-white dark:bg-slate-800 dark:border-slate-700 p-6 rounded-xl shadow-lg mb-6">
-                            <h3 class="font-bold text-teal-600 dark:text-teal-400 mb-2 text-lg">حالة تسجيل أنشطة الجمعة
+                            <h3 id="activityStatusTitle" class="font-bold text-teal-600 dark:text-teal-400 mb-2 text-lg">حالة تسجيل أنشطة الجمعة
                                 الماضية</h3>
                             <div id="lastFridayStatusContainer"
                                 class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"></div>
@@ -426,107 +456,78 @@
                 <!-- ════════════════════════════════════════════════════════════
      ATTENDANCE PAGE
 ════════════════════════════════════════════════════════════ -->
-                <section id="attendancePage" class="page-content hidden-view">
-                    <!-- Fixed Header (Flex None) -->
-                    <div
-                        class="flex-none bg-[#f1f5f9] dark:bg-[#0f172a] pb-2 -mx-6 px-6 pt-2 border-b dark:border-slate-800 shadow-sm">
-                        <h1 class="page-title mb-6"><i class="fas fa-calendar-check"></i> تسجيل الحضور</h1>
+                <section id="attendancePage" class="page-content hidden-view overflow-y-auto">
+                    <h1 class="page-title mb-4"><i class="fas fa-calendar-check"></i> تسجيل الحضور</h1>
 
-                        <!-- Year/Month selectors (Professional Filter) -->
-                        <div class="card mb-6 overflow-hidden border-teal-100 dark:border-teal-900 shadow-teal-500/5">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="relative">
-                                    <label class="form-label mb-2 flex items-center gap-2">
-                                        <i class="fas fa-calendar-alt text-teal-600"></i> السنة
-                                    </label>
-                                    <div class="relative group">
-                                        <select id="yearSelector"
-                                            class="form-input form-select pr-10 font-bold transition-shadow hover:shadow-sm">
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="relative">
-                                    <label class="form-label mb-2 flex items-center gap-2">
-                                        <i class="fas fa-calendar-day text-teal-600"></i> الشهر
-                                    </label>
-                                    <div class="relative group">
-                                        <select id="monthSelector"
-                                            class="form-input form-select pr-10 disabled:opacity-50 transition-shadow hover:shadow-sm"
-                                            disabled>
-                                            <option value="">-- اختــر الشهــر --</option>
-                                        </select>
-                                    </div>
-                                </div>
+                    <!-- Year/Month selectors -->
+                    <div class="card mb-4 overflow-hidden border-teal-100 dark:border-teal-900 shadow-teal-500/5">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="relative">
+                                <label class="form-label mb-1 flex items-center gap-2 text-xs">
+                                    <i class="fas fa-calendar-alt text-teal-600"></i> السنة
+                                </label>
+                                <select id="yearSelector"
+                                    class="form-input form-select pr-10 font-bold text-sm py-2">
+                                </select>
                             </div>
-                        </div>
-
-                        <!-- Fridays Grid -->
-                        <div class="card mb-2">
-                            <h3 class="font-bold mb-4 text-slate-700 dark:text-slate-200 flex items-center gap-2">
-                                <i class="fas fa-calendar-day text-teal-500"></i> جُمع الشهر
-                            </h3>
-                            <div id="fridaysGrid" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2"></div>
+                            <div class="relative">
+                                <label class="form-label mb-1 flex items-center gap-2 text-xs">
+                                    <i class="fas fa-calendar-day text-teal-600"></i> الشهر
+                                </label>
+                                <select id="monthSelector"
+                                    class="form-input form-select pr-10 disabled:opacity-50 text-sm py-2"
+                                    disabled>
+                                    <option value="">-- اختــر الشهــر --</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Scrollable Body (Flex 1) -->
-                    <div class="flex-1 overflow-y-auto -mx-6 px-6 pt-4 custom-scrollbar">
-                        <!-- Activity Buttons -->
-                        <div id="activityButtons" class="hidden-view grid grid-cols-3 md:grid-cols-6 gap-2 mb-6"></div>
+                    <!-- Fridays Grid (2 cols on mobile) -->
+                    <div class="card mb-4">
+                        <h3 class="font-bold mb-3 text-slate-700 dark:text-slate-200 flex items-center gap-2 text-sm">
+                            <i class="fas fa-calendar-day text-teal-500"></i> جُمع الشهر
+                        </h3>
+                        <div id="fridaysGrid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2"></div>
+                    </div>
 
-                        <!-- Servants Checklist -->
-                        <div id="attendanceListContainer" class="hidden-view card mb-20">
-                            <h3 id="attendanceListTitle"
-                                class="font-bold text-lg mb-4 text-teal-600 dark:text-teal-400">
-                            </h3>
+                    <!-- Activity Buttons (2 cols on mobile) -->
+                    <div id="activityButtons" class="hidden-view grid grid-cols-2 md:grid-cols-6 gap-2 mb-4"></div>
 
-                            <!-- No-activity and Special-day section -->
-                            <div id="noActivitySection"
-                                class="mb-4 p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border dark:border-slate-700 space-y-4">
-                                <!-- Option 1: Negligence (unrecorded) -->
-                                <div
-                                    class="flex items-start gap-3 p-2 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors border border-transparent hover:border-amber-100 dark:hover:border-amber-800">
-                                    <input type="checkbox" id="noActivityCheck"
-                                        class="w-5 h-5 mt-0.5 rounded text-amber-500 cursor-pointer">
-                                    <label for="noActivityCheck" class="cursor-pointer">
-                                        <span class="block font-black text-amber-800 dark:text-amber-200">لا يوجد نشاط
-                                            (تقصير)</span>
-                                        <span class="block text-[10px] text-amber-600/70 dark:text-amber-400/50">سيتم
-                                            احتساب هذا اليوم بنسبة 0% حضور (يؤثر على النسب).</span>
-                                    </label>
-                                </div>
+                    <!-- Servants Checklist -->
+                    <div id="attendanceListContainer" class="hidden-view card mb-20">
+                        <h3 id="attendanceListTitle"
+                            class="font-bold text-base mb-3 text-teal-600 dark:text-teal-400">
+                        </h3>
 
-                                <!-- Divider line -->
-                                <div class="border-t dark:border-slate-800 opacity-50"></div>
-
-                                <!-- Option 2: Special Case (Excluded) -->
-                                <div
-                                    class="flex flex-col gap-3 p-2 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-colors border border-transparent hover:border-purple-100 dark:hover:border-purple-800">
-                                    <label class="flex items-start gap-3 cursor-pointer">
-                                        <input type="checkbox" id="isSpecialCheck"
-                                            class="w-5 h-5 mt-0.5 rounded text-purple-500 cursor-pointer">
-                                        <div class="flex-grow">
-                                            <span class="block font-black text-purple-800 dark:text-purple-200">يوم
-                                                استثنائي (ندوة/رحلة/حفلة)</span>
-                                            <span
-                                                class="block text-[10px] text-purple-600/70 dark:text-purple-400/50">لن
-                                                يتم احتساب هذا النشاط لهذا اليوم (لا يؤثر على النسب).</span>
-                                        </div>
-                                    </label>
-                                    <input id="specialReasonInput" type="text"
-                                        placeholder="اكتب السبب الإستثنائي... (مثلاً: ندوة أب كاهن)"
-                                        class="form-input text-sm p-3 rounded-xl border-purple-200 dark:border-purple-800 bg-white dark:bg-slate-800 focus:ring-purple-400 hidden-view">
-                                </div>
+                        <!-- No-activity and Special-day (compact) -->
+                        <div id="noActivitySection"
+                            class="mb-3 p-3 bg-slate-50 dark:bg-slate-900/40 rounded-xl border dark:border-slate-700 space-y-2">
+                            <label class="flex items-center gap-3 cursor-pointer p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/10">
+                                <input type="checkbox" id="noActivityCheck"
+                                    class="w-5 h-5 rounded text-amber-500 cursor-pointer flex-shrink-0">
+                                <span class="font-bold text-sm text-amber-800 dark:text-amber-200">لا يوجد نشاط (تقصير)</span>
+                            </label>
+                            <div class="border-t dark:border-slate-800 opacity-40"></div>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-3 cursor-pointer p-1.5 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/10">
+                                    <input type="checkbox" id="isSpecialCheck"
+                                        class="w-5 h-5 rounded text-purple-500 cursor-pointer flex-shrink-0">
+                                    <span class="font-bold text-sm text-purple-800 dark:text-purple-200">يوم استثنائي</span>
+                                </label>
+                                <input id="specialReasonInput" type="text"
+                                    placeholder="اكتب السبب... (مثلاً: ندوة أب كاهن)"
+                                    class="form-input text-sm p-2 rounded-lg border-purple-200 dark:border-purple-800 bg-white dark:bg-slate-800 hidden-view">
                             </div>
-
-                            <div id="servantsChecklist"
-                                class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 mb-4">
-                            </div>
-
-                            <button id="saveActivityAttendanceBtn" class="btn btn-primary w-full md:w-auto">
-                                <i class="fas fa-save"></i> حفظ الحضور
-                            </button>
                         </div>
+
+                        <div id="servantsChecklist"
+                            class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 mb-4">
+                        </div>
+
+                        <button id="saveActivityAttendanceBtn" class="btn btn-primary w-full md:w-auto">
+                            <i class="fas fa-save"></i> حفظ الحضور
+                        </button>
                     </div>
                 </section>
 
@@ -798,6 +799,46 @@
                 </section>
 
                 <!-- ════════════════════════════════════════════════════════════
+     USER MANAGEMENT PAGE (Admin Only)
+════════════════════════════════════════════════════════════ -->
+                <section id="userManagementPage" class="page-content hidden-view overflow-y-auto">
+                    <div class="page-header flex justify-between items-center mb-6">
+                        <h1 class="page-title m-0"><i class="fas fa-users-cog text-indigo-500"></i> إدارة المستخدمين</h1>
+                        <button id="createNewUserBtn" class="btn btn-primary shadow-xl hover:shadow-indigo-500/20">
+                            <i class="fas fa-user-plus"></i> مستخدم جديد
+                        </button>
+                    </div>
+
+                    <div class="card bg-white dark:bg-slate-800 rounded-2xl shadow-lg border dark:border-slate-700">
+                        <div class="p-6 border-b dark:border-slate-700 flex flex-col md:flex-row justify-between items-center gap-4">
+                            <h2 class="text-lg font-bold text-slate-800 dark:text-slate-200">مديرو النظام والخدمات</h2>
+                            <div class="relative w-full md:w-64">
+                                <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                <input type="text" id="userSearchBar" placeholder="بحث بالاسم أو رقم الموبايل..."
+                                    class="form-input w-full pr-10 rounded-xl text-sm border-slate-200 dark:border-slate-700">
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto w-full custom-scrollbar">
+                            <table class="w-full text-right whitespace-nowrap">
+                                <thead class="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase">
+                                    <tr>
+                                        <th class="p-4">الاسم</th>
+                                        <th class="p-4">رقم الموبايل / تسجيل الدخول</th>
+                                        <th class="p-4">الصلاحية</th>
+                                        <th class="p-4">الخدمات المخصصة</th>
+                                        <th class="p-4 text-center">إجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody" class="divide-y divide-slate-100 dark:divide-slate-700">
+                                    <tr><td colspan="5" class="text-center p-8 text-slate-400"><i class="fas fa-spinner fa-spin ml-2"></i>جاري التحميل...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ════════════════════════════════════════════════════════════
      FOLLOW-UP PAGE
 ════════════════════════════════════════════════════════════ -->
                 <section id="followUpPage" class="page-content hidden-view overflow-y-auto">
@@ -927,19 +968,58 @@
      MODALS
 ═══════════════════════════════════════════════════════════════ -->
 
-    <!-- ── Password Modal ── -->
-    <div id="passwordModal" class="modal-overlay hidden-view">
-        <div class="modal-content max-w-md bg-white dark:bg-slate-800 dark:border-slate-700">
-            <button class="close-modal-btn"><i class="fas fa-times"></i></button>
-            <h2 class="modal-title"><i class="fas fa-lock"></i> الدخول</h2>
-            <p class="text-slate-500 text-sm mb-4">
-                كلمة السر لـ: <strong id="passwordModalServiceName" class="text-teal-600"></strong>
-            </p>
-            <form id="passwordForm" onsubmit="return false">
-                <input type="password" id="servicePasswordInput" placeholder="كلمة السر..."
-                    class="form-input w-full mb-4" autocomplete="current-password">
-                <button type="submit" class="btn btn-primary w-full">
-                    <i class="fas fa-sign-in-alt"></i> دخول
+    <div id="passwordModal" class="modal-overlay hidden-view backdrop-blur-md bg-slate-900/60">
+        <div class="modal-content relative overflow-hidden max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-3xl p-8" style="animation: modalPop bounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+            <!-- Decorative Background Glow -->
+            <div class="absolute top-0 right-0 w-40 h-40 bg-teal-500/10 rounded-full blur-[50px] -z-10 -translate-y-1/2 translate-x-1/2"></div>
+            <div class="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-[40px] -z-10 translate-y-1/2 -translate-x-1/2"></div>
+
+            <button class="close-modal-btn absolute top-4 left-4 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 transition-colors z-20 m-0"><i class="fas fa-times"></i></button>
+            
+            <div class="text-center mb-6">
+                <!-- Icon/Avatar -->
+                <div class="w-20 h-20 mx-auto bg-gradient-to-tr from-teal-500 to-indigo-600 rounded-[1.5rem] flex items-center justify-center mb-4 shadow-lg shadow-teal-500/30 transform rotate-3 hover:rotate-0 transition-transform">
+                    <i class="fas fa-user-shield text-white text-3xl"></i>
+                </div>
+                <h2 class="text-2xl font-black text-slate-800 dark:text-white tracking-tight mb-2">تسجيل دخول المسؤول</h2>
+                <div class="inline-flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 mx-auto">
+                    <span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
+                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400">الدخول إلى: <strong id="passwordModalServiceName" class="text-teal-600 dark:text-teal-400"></strong></span>
+                </div>
+            </div>
+
+            <form id="passwordForm" onsubmit="return false" class="space-y-5 text-right relative z-10">
+                <div class="form-group relative">
+                    <label class="text-xs font-black text-slate-500 dark:text-slate-400 mb-2 blcok text-right px-1">رقم الموبايل</label>
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 right-0 w-12 flex items-center justify-center text-slate-400 group-focus-within:text-teal-500 transition-colors z-10">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <input type="tel" id="serviceUserMobile" placeholder="01xxxxxxxxx"
+                            class="form-input w-full pl-4 pr-12 py-3.5 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:border-teal-500 focus:ring-teal-500/20 rounded-2xl font-bold text-slate-800 dark:text-white transition-all shadow-sm" autocomplete="username">
+                    </div>
+                </div>
+                
+                <div class="form-group relative">
+                    <label class="text-xs font-black text-slate-500 dark:text-slate-400 mb-2 blcok text-right px-1">كلمة السر</label>
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 right-0 w-12 flex items-center justify-center text-slate-400 group-focus-within:text-teal-500 transition-colors z-10">
+                            <i class="fas fa-key"></i>
+                        </div>
+                        <input type="password" id="servicePasswordInput" placeholder="••••••••"
+                            class="form-input w-full pl-4 pr-12 py-3.5 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:border-teal-500 focus:ring-teal-500/20 rounded-2xl font-bold text-slate-800 dark:text-white tracking-widest transition-all shadow-sm" autocomplete="current-password">
+                    </div>
+                </div>
+                
+                <div id="loginErrorMessage" class="hidden-view text-red-500 text-xs font-bold text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-800/50 animate-in fade-in zoom-in duration-200">
+                    <i class="fas fa-exclamation-circle ml-1"></i>بيانات الدخول غير صحيحة أو تم إيقاف الحساب
+                </div>
+                
+                <button type="submit" id="submitLoginBtn" class="relative overflow-hidden w-full py-4 rounded-2xl text-white font-black tracking-wide transition-all hover:-translate-y-1 hover:shadow-2xl hover:shadow-teal-500/30 active:scale-95 group mt-2" style="background: linear-gradient(135deg, #14b8a6, #0ea5e9);">
+                    <span class="relative z-10 flex items-center justify-center gap-2">
+                        <i class="fas fa-sign-in-alt group-hover:translate-x-1 transition-transform"></i> دخول للنظام
+                    </span>
+                    <div class="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[150%] animate-[shimmer_2s_infinite]"></div>
                 </button>
             </form>
         </div>
@@ -1358,6 +1438,28 @@
                             class="text-teal-500 underline">Google AI Studio</a>
                     </p>
                 </div>
+                <div class="p-4 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl border border-indigo-200 dark:border-indigo-700 mb-4">
+                    <h3 class="font-bold text-indigo-700 dark:text-indigo-300 mb-2 flex items-center gap-2">
+                        <i class="fas fa-user-shield"></i> تهيئة النظام (أول مرة)
+                    </h3>
+                    <p class="text-xs text-indigo-600 dark:text-indigo-400 mb-3">
+                        استخدم هذا الزر لإنشاء حساب "الأمين العام" الأول إذا لم يكن لديك حسابات.
+                    </p>
+                    <button type="button" id="bootstrapAdminBtn" class="btn btn-ghost w-full border-indigo-200 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100">
+                        <i class="fas fa-plus-circle ml-1"></i> إنشاء حساب المدير الأول
+                    </button>
+                    <p id="bootstrapStatus" class="hidden text-[10px] font-bold mt-2 text-center"></p>
+                </div>
+                
+                <div class="p-4 bg-orange-50 dark:bg-orange-900/30 rounded-xl border border-orange-200 dark:border-orange-700 mb-4">
+                    <h3 class="font-bold text-orange-700 dark:text-orange-300 mb-2 flex items-center gap-2">
+                        <i class="fas fa-lock"></i> كلمة سر الإعدادات (للمدير)
+                    </h3>
+                    <p class="text-xs text-orange-600 dark:text-orange-400 mb-3">
+                        يمكنك تغيير كلمة السر المطلوبة للدخول لشاشة الإعدادات. اتركه فارغاً إذا لم ترغب بتغيير الكلمة الحالية.
+                    </p>
+                    <input type="password" id="systemSettingsPasswordInput" class="form-input w-full font-bold tracking-widest text-center" placeholder="أدخل كلمة سر جديدة...">
+                </div>
                 <button type="submit" class="btn btn-primary w-full">
                     <i class="fas fa-save"></i> حفظ الإعدادات
                 </button>
@@ -1381,6 +1483,58 @@
         </div>
     </div>
 
+    <!-- ── User Management Modal ── -->
+    <div id="userManagementModal" class="modal-overlay hidden-view">
+        <div class="modal-content max-w-lg bg-white dark:bg-slate-800 dark:border-slate-700">
+            <button class="close-modal-btn"><i class="fas fa-times"></i></button>
+            <h2 id="userModalTitle" class="modal-title font-black"><i class="fas fa-user-edit text-indigo-500"></i> بيانات المستخدم</h2>
+            
+            <form id="userManagementForm" onsubmit="return false" class="space-y-4 mt-4 text-right">
+                <input type="hidden" id="userManagementDocId">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="text-xs font-black text-slate-500 dark:text-slate-400 mb-2 block">الاسم</label>
+                        <input type="text" id="userMgmtName" class="form-input w-full font-bold" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="text-xs font-black text-slate-500 dark:text-slate-400 mb-2 block">رقم الموبايل / تسجيل الدخول</label>
+                        <input type="text" id="userMgmtMobile" class="form-input w-full font-bold" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="text-xs font-black text-slate-500 dark:text-slate-400 mb-2 block">كلمة السر</label>
+                        <input type="text" id="userMgmtPassword" class="form-input w-full font-bold tracking-widest" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="text-xs font-black text-slate-500 dark:text-slate-400 mb-2 block">نوع الصلاحية</label>
+                        <select id="userMgmtRole" class="form-input form-select font-bold text-sm">
+                            <option value="leader">أمين خدمة (Leader)</option>
+                            <option value="admin">أمين عام (Admin)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-6 border-t dark:border-slate-700 pt-4">
+                    <label class="text-sm font-black text-indigo-600 dark:text-indigo-400 mb-3 block">
+                        <i class="fas fa-id-card-clip ml-1"></i> الخدمات المخصصة (يمكن اختيار أكثر من خدمة)
+                    </label>
+                    
+                    <div id="userMgmtServicesContainer" class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-900/50 rounded-xl border dark:border-slate-700 custom-scrollbar">
+                        <!-- Checkboxes populated via JS -->
+                    </div>
+                </div>
+
+                <div id="userMgmtErrorMessage" class="hidden-view mt-3 text-red-500 text-xs font-bold text-center p-2 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-800 relative z-10 w-full animate-in fade-in zoom-in duration-200"></div>
+
+                <div class="flex gap-3 mt-6 pt-4">
+                    <button type="button" class="close-modal-btn btn btn-ghost flex-1">إلغاء</button>
+                    <button type="submit" id="userMgmtSaveBtn" class="btn btn-primary flex-1 font-bold shadow-lg shadow-indigo-500/20 bg-indigo-600 hover:bg-indigo-700 border-indigo-600">
+                        <i class="fas fa-save ml-1"></i> حفظ المستخدم
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- ── AI Greeting Modal ── -->
     <div id="aiGreetingModal" class="modal-overlay hidden-view">
         <div
@@ -1401,6 +1555,77 @@
                 </button>
             </div>
         </div>
+        </div>
+    </div>
+
+    <!-- ── PWA Install Prompt Bottom Sheet ── -->
+    <div id="pwaInstallPrompt" class="fixed bottom-0 left-0 right-0 z-50 transform translate-y-full transition-transform duration-500 ease-out flex justify-center pb-4 px-4 hidden">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-3xl p-5 w-full max-w-md flex flex-col gap-4 relative overflow-hidden">
+            <!-- decorative background glow -->
+            <div class="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 rounded-full blur-[40px] -z-10 translate-x-1/2 -translate-y-1/2"></div>
+            
+            <button id="closeInstallPromptBtn" class="absolute top-3 left-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 flex items-center justify-center transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="flex items-center gap-4">
+                <img src="app-icon.png" alt="شعار خدمتي" class="w-14 h-14 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800">
+                <div class="text-right flex-1">
+                    <h3 class="text-lg font-black text-slate-800 dark:text-white">تطبيق خدمتي</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-bold mt-1">وصول أسرع بدون إنترنت للبرنامج</p>
+                </div>
+            </div>
+            
+            <button id="installAppBtn" class="w-full py-3.5 rounded-xl text-white font-black tracking-wide shadow-lg shadow-teal-500/30 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2" style="background: linear-gradient(135deg, #14b8a6, #0ea5e9);">
+                <i class="fas fa-download"></i> تثبيت التطبيق الآن
+            </button>
+        </div>
+    </div>
+
+    <!-- ── Simple Static Install Button (Visible logic in app.js) ── -->
+    <div id="staticInstallBanner" class="fixed bottom-6 right-6 z-40 hidden">
+        <button id="staticInstallBtn" class="flex items-center gap-2 bg-white dark:bg-slate-800 text-teal-600 dark:text-teal-400 font-black py-3 px-6 rounded-full shadow-2xl border border-teal-100 dark:border-teal-900/50 hover:scale-110 active:scale-95 transition-all animate-bounce">
+            <i class="fas fa-mobile-screen-button text-xl"></i>
+            <span>تنزيل "خدمتي"</span>
+        </button>
+    </div>
+
+    <!-- ── Manual Install Guide Modal ── -->
+    <div id="manualInstallGuide" class="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-sm w-full p-6 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1.5" style="background: linear-gradient(90deg, #14b8a6, #0ea5e9, #8b5cf6);"></div>
+            <button id="closeManualGuideBtn" class="absolute top-4 left-4 text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <div class="text-center mb-5 mt-2">
+                <img src="app-icon.png" class="w-16 h-16 rounded-2xl mx-auto shadow-lg mb-3">
+                <h3 class="text-xl font-black text-slate-800 dark:text-white">تثبيت تطبيق خدمتي</h3>
+                <p class="text-xs text-slate-500 mt-1">اتبع الخطوات التالية حسب جهازك</p>
+            </div>
+
+            <!-- Android Instructions -->
+            <div class="bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 mb-3 border border-green-100 dark:border-green-900/40">
+                <h4 class="font-black text-green-700 dark:text-green-400 flex items-center gap-2 mb-2">
+                    <i class="fab fa-android"></i> أندرويد (Chrome)
+                </h4>
+                <ol class="text-sm text-green-800 dark:text-green-300 space-y-1 list-decimal list-inside font-bold">
+                    <li>اضغط على <i class="fas fa-ellipsis-vertical mx-1"></i> (النقاط الثلاث) أعلى المتصفح</li>
+                    <li>اختر <strong>"تثبيت التطبيق"</strong> أو <strong>"إضافة إلى الشاشة الرئيسية"</strong></li>
+                </ol>
+            </div>
+
+            <!-- iOS Instructions -->
+            <div class="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-4 border border-blue-100 dark:border-blue-900/40">
+                <h4 class="font-black text-blue-700 dark:text-blue-400 flex items-center gap-2 mb-2">
+                    <i class="fab fa-apple"></i> آيفون (Safari)
+                </h4>
+                <ol class="text-sm text-blue-800 dark:text-blue-300 space-y-1 list-decimal list-inside font-bold">
+                    <li>اضغط على <i class="fas fa-arrow-up-from-bracket mx-1"></i> (زر المشاركة) أسفل الشاشة</li>
+                    <li>اختر <strong>"إضافة إلى الشاشة الرئيسية"</strong></li>
+                </ol>
+            </div>
+        </div>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════
@@ -1408,10 +1633,29 @@
 ═══════════════════════════════════════════════════════════════ -->
     <script type="module" src="src/app.js"></script>
 
-    <!-- Show loading on start -->
+    <!-- Show loading on start and load heavy libraries in background -->
     <script>
         document.getElementById('loadingOverlay').classList.remove('hidden-view');
         document.getElementById('loadingOverlay').classList.add('flex');
+        
+        // Lazy load heavy libraries to prevent blocking UI rendering
+        window.addEventListener('load', () => {
+            const libraries = [
+                "https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js",
+                "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js",
+                "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+                "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
+                "https://cdn.jsdelivr.net/npm/marked/marked.min.js"
+            ];
+            setTimeout(() => {
+                libraries.forEach(src => {
+                    const s = document.createElement('script');
+                    s.src = src;
+                    s.async = true;
+                    document.body.appendChild(s);
+                });
+            }, 1000); // 1-second delay so they don't fight with Firebase/UI for bandwidth
+        });
     </script>
 
 </body>

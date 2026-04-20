@@ -40,6 +40,7 @@ export async function showDashboard() {
         DOM.serviceAnnouncementsLink?.classList.toggle('hidden-view', isAdmin);
         DOM.correspondenceCenterLink?.classList.toggle('hidden-view', !isAdmin);
         DOM.announcementsBoardLink?.classList.toggle('hidden-view', !isAdmin);
+        DOM.userManagementLink?.classList.toggle('hidden-view', !isAdmin);
 
         const eventsLink = document.getElementById('eventsPageLink');
         if (eventsLink) eventsLink.classList.toggle('hidden-view', isAdmin);
@@ -53,6 +54,9 @@ export async function showDashboard() {
         // Show dashboard, hide login
         DOM.loginOrServicesView?.classList.add('hidden-view');
         DOM.mainDashboard?.classList.remove('hidden-view');
+
+        // Hide install banner inside service pages (only show on front page)
+        document.getElementById('staticInstallBanner')?.classList.add('hidden');
 
         // Load data
         await loadServants();
@@ -364,10 +368,30 @@ function renderLastFridayDetails(servants, attendanceCache) {
     }
 
     // 2. Build activity status cards (clickable to open modal)
+    // Activities shift to the upcoming Friday starting on Thursday
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let actFriday = new Date(today);
+    let appOffset = 5 - today.getDay();
+    if (appOffset > 1) { // Sun(0) to Wed(3) => evaluate to past week
+        appOffset -= 7;
+    }
+    actFriday.setDate(today.getDate() + appOffset);
+    const ay = actFriday.getFullYear();
+    const am = String(actFriday.getMonth() + 1).padStart(2, '0');
+    const ad = String(actFriday.getDate()).padStart(2, '0');
+    const activityDateStr = `${ay}-${am}-${ad}`;
+    const activityDayData = attendanceCache[activityDateStr] || {};
+
+    const activityTitleEl = document.getElementById('activityStatusTitle');
+    if (activityTitleEl) {
+        activityTitleEl.innerHTML = `حالة تسجيل أنشطة الجمعة <span class="text-sm font-normal text-slate-500">(${activityDateStr})</span>`;
+    }
+
     if (statusContainer) {
         const targetActs = ACTIVITIES.filter(a => a.key !== 'apology');
         const activityCardsHtml = targetActs.map(act => {
-            const actData = dayData[act.key];
+            const actData = activityDayData[act.key];
             let statusHtml, cardStyle, clickAction = '';
 
             if (!actData) {
@@ -380,8 +404,8 @@ function renderLastFridayDetails(servants, attendanceCache) {
                 cardStyle = 'border: 1px dashed #fcd34d;';
             } else {
                 const cnt = actData.attendees?.length || 0;
-                // Add click handler for modal
-                clickAction = `onclick="openActivityModal('${act.key}', '${dateStr}')"`;
+                // Add click handler for modal using new specialized date str
+                clickAction = `onclick="openActivityModal('${act.key}', '${activityDateStr}')"`;
 
                 if (AppState.isGeneralSecretaryMode) {
                     statusHtml = `<div class="mt-2">
@@ -467,7 +491,7 @@ window.openActivityModal = function (actKey, dateStr) {
 
         const html = sortedGroupKeys.map((groupName, idx) => {
             const list = groups[groupName];
-            
+
             let colorKey, icon, borderStr;
             if (isGeneralSecretaryMode) {
                 const svcConfig = SERVICES.find(s => s.name === groupName) || {};
@@ -646,10 +670,18 @@ function renderServiceTips(servants, attendanceCache) {
     const targetActs = ACTIVITIES.filter(a => a.key !== 'apology');
     const tips = [];
 
-    // Calculate overall stats
+    // Only use last 30 days of attendance data for tips
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const cutoffStr = thirtyDaysAgo.toISOString().split('T')[0];
+
+    const recentEntries = Object.entries(attendanceCache)
+        .filter(([date]) => date >= cutoffStr);
+
+    // Calculate overall stats (last 30 days only)
     const actStats = targetActs.map(act => {
         let attended = 0, meetings = 0;
-        Object.values(attendanceCache).forEach(dayData => {
+        recentEntries.forEach(([, dayData]) => {
             if (dayData[act.key] && !dayData[act.key].isSpecial && dayData[act.key].note == null) {
                 meetings++;
                 attended += dayData[act.key].attendees?.length || 0;
@@ -671,13 +703,30 @@ function renderServiceTips(servants, attendanceCache) {
         tips.push({ icon: 'fa-star', color: 'text-yellow-500', text: `أعلى حضور في "${strongest.name}" (${strongest.pct}%). استمر في هذا المستوى! ⭐` });
     }
 
-    // Count unrecorded Fridays
+    // Count unrecorded Fridays (last 4 Fridays from today)
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    // Find last Friday (or today if it IS Friday)
+    let lastFri = new Date(today);
+    const dayOfWeek = lastFri.getDay(); // 0=Sun ... 5=Fri ... 6=Sat
+    const daysBack = dayOfWeek >= 5 ? dayOfWeek - 5 : dayOfWeek + 2;
+    lastFri.setDate(lastFri.getDate() - daysBack);
+
     let unrec = 0;
     for (let i = 0; i < 4; i++) {
-        let fd = new Date(today); fd.setDate(fd.getDate() - (fd.getDay() + 2 + i * 7));
-        const ds = fd.toISOString().split('T')[0];
-        if (!attendanceCache[ds]) unrec++;
+        const fd = new Date(lastFri);
+        fd.setDate(fd.getDate() - (i * 7));
+        const y = fd.getFullYear();
+        const m = String(fd.getMonth() + 1).padStart(2, '0');
+        const d = String(fd.getDate()).padStart(2, '0');
+        const ds = `${y}-${m}-${d}`;
+        // Check if at least one activity was recorded on this date
+        const dayData = attendanceCache[ds];
+        const hasAnyRecord = dayData && Object.keys(dayData).some(k => {
+            const v = dayData[k];
+            return v && typeof v === 'object' && (v.attendees || v.note != null || v.isSpecial);
+        });
+        if (!hasAnyRecord) unrec++;
     }
     if (unrec > 0) {
         tips.push({ icon: 'fa-calendar-times', color: 'text-red-500', text: `يوجد ${unrec} جمعة بدون تسجيل في آخر شهر. سجّل الحضور أولاً بأول.` });

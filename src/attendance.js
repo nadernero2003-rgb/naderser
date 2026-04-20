@@ -149,15 +149,13 @@ export function getServantHistoryStatusForDate(servantId, currentDateStr, attend
         let attendedThatWeek = false;
         let excusedThatWeek = (pDayData['apology']?.attendees || []).includes(servantId);
 
-        ACTIVITIES.filter(a => a.key !== 'apology').forEach(act => {
-            const actData = pDayData[act.key];
-            if (actData && !actData.isSpecial) {
-                anyAttendanceThatWeek = true;
-                if ((actData.attendees || []).includes(servantId)) {
-                    attendedThatWeek = true;
-                }
+        const actData = pDayData['service'];
+        if (actData && !actData.isSpecial) {
+            anyAttendanceThatWeek = true;
+            if ((actData.attendees || []).includes(servantId)) {
+                attendedThatWeek = true;
             }
-        });
+        }
 
         if (!anyAttendanceThatWeek) continue;
 
@@ -354,8 +352,8 @@ export function getLastFridayAbsences(servantsCache, attendanceCache) {
     // Calculate target Friday: Shift to upcoming/current Friday starting on Thursday
     let lastFriday = new Date(today);
     let offset = 5 - today.getDay();
-    if (offset > 1) {
-        offset -= 7; // If today is Sun(0), Mon(1), Tue(2), Wed(3), we look back to last week's Friday
+    if (offset > 0) {
+        offset -= 7; // If today is Sun(0), Mon(1), Tue(2), Wed(3), Thu(4) we look back to last week's Friday
     }
     lastFriday.setDate(today.getDate() + offset);
 
@@ -365,10 +363,8 @@ export function getLastFridayAbsences(servantsCache, attendanceCache) {
     const dateStr = `${y}-${m}-${d}`;
 
     const dayData = attendanceCache[dateStr] || {};
-    const allAttendees = new Set();
-    ACTIVITIES.filter(a => a.key !== 'apology').forEach(act => {
-        (dayData[act.key]?.attendees || []).forEach(id => allAttendees.add(id));
-    });
+    // Only track attendance based on the "الخدمة" (service) activity
+    const allAttendees = new Set(dayData['service']?.attendees || []);
     const globalExcusedSet = new Set(dayData['apology']?.attendees || []);
 
     const absent = servantsCache.filter(s => {
@@ -422,14 +418,12 @@ export function getLastFridayAbsences(servantsCache, attendanceCache) {
                 let servantAttendedThatWeek = false;
                 let servantExcusedThatWeek = (pDayData['apology']?.attendees || []).includes(s.id);
 
-                ACTIVITIES.filter(a => a.key !== 'apology').forEach(act => {
-                    if (pDayData[act.key] && pDayData[act.key].note == null) {
-                        anyAttendanceThatWeek = true;
-                        if ((pDayData[act.key].attendees || []).includes(s.id)) {
-                            servantAttendedThatWeek = true;
-                        }
+                if (pDayData['service'] && pDayData['service'].note == null && !pDayData['service'].isSpecial) {
+                    anyAttendanceThatWeek = true;
+                    if ((pDayData['service'].attendees || []).includes(s.id)) {
+                        servantAttendedThatWeek = true;
                     }
-                });
+                }
 
                 if (!anyAttendanceThatWeek) continue; // Skip unrecorded weeks
                 if (!servantAttendedThatWeek && !servantExcusedThatWeek) {

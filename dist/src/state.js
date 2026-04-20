@@ -8,6 +8,8 @@ export const AppState = {
     isGeneralSecretaryMode: false,
     userId: null,
     isLocalMode: false,
+    currentUser: null, // { name, identifier, role, permissions }
+    loggedInServices: new Set(),
 
     // Firebase references
     db: null,

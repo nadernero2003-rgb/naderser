@@ -15,9 +15,11 @@ export function initDOM() {
         'homePage', 'servantsPage', 'attendancePage', 'reportsPage',
         'calendarPage', 'correspondencePage', 'correspondenceCenterPage',
         'followUpPage', 'serviceAnnouncementsPage', 'announcementsBoardPage', 'eventsPage',
+        'userManagementPage',
         // Sidebar links
         'correspondenceLink', 'followUpLink', 'attendancePageLink', 'correspondenceCenterLink',
         'serviceAnnouncementsLink', 'announcementsBoardLink', 'comparisonReportTab', 'calendarPageLink',
+        'userManagementLink',
         // Servants Page
         'servantsTableBody', 'serviceColumnHeader', 'serviceFilterGroup', 'servantServiceFilter', 'birthdayAlertsContainer', 'servantsViewToggle',
         'searchInput', 'addManualBtn', 'importExcelBtn', 'exportServantsExcelBtn',

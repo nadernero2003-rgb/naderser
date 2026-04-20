@@ -9,7 +9,7 @@ import {
     DOM, initDOM, showLoading, showMessage, openModal, closeModal,
     initCloseButtons, toggleTheme, switchPage, applyTheme
 } from './ui.js';
-import { handlePasswordSubmit, handleServiceCardClick, logout, openSettings, handleSettingsPasswordSubmit } from './auth.js';
+import { handlePasswordSubmit, handleServiceCardClick, logout, openSettings, handleSettingsPasswordSubmit, bootstrapFirstAdmin } from './auth.js';
 import { handleSettingsSave } from './ai.js';
 import {
     loadServants, openAddModal, openEditModal, handleServantFormSubmit,
@@ -111,13 +111,15 @@ window.generateAndShowAIGreeting = async function (name) {
 // ─── Bootstrap ────────────────────────────────────────────────────
 async function bootstrap() {
     initDOM();
-    setupAttendanceUIListeners();
-    await initFirebase();
     initCloseButtons();
-    renderServicesGrid();
+    renderServicesGrid();    // Show UI immediately
     bindGlobalEvents();
-    await updateServiceCardBadges();
-    showLoading(false);
+    showLoading(false);      // Hide loading ASAP so user sees cards
+    setupAttendanceUIListeners();
+    await initFirebase();    // Connect to DB in background
+    updateServiceCardBadges();
+    updateBirthdayBadges();  // Check for today's birthdays
+    initPWA();               // Setup install logic
 }
 
 // ─── Service Selection Grid ────────────────────────────────────────
@@ -128,7 +130,7 @@ function renderServicesGrid() {
     grid.innerHTML = SERVICES.map(svc => {
         const c = COLOR_MAP[svc.color] || COLOR_MAP.teal;
         const badgeId = `service-badge-${svc.name.replace(/\s+/g, '-')}`;
-        
+
         return `
         <div class="service-card group relative flex flex-col items-center justify-center p-5 md:p-6 rounded-2xl cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:scale-[1.03] active:scale-[0.98]"
              data-service="${svc.name}"
@@ -169,6 +171,7 @@ function bindGlobalEvents() {
     DOM['theme-checkbox']?.addEventListener('change', toggleTheme);
     document.getElementById('openSettingsBtn')?.addEventListener('click', openSettings);
     document.getElementById('settingsForm')?.addEventListener('submit', handleSettingsSave);
+    document.getElementById('bootstrapAdminBtn')?.addEventListener('click', bootstrapFirstAdmin);
 
     // ── Settings Password Modal ────────────────────────────────────
     document.getElementById('settingsPasswordForm')?.addEventListener('submit', handleSettingsPasswordSubmit);
@@ -223,7 +226,7 @@ function bindGlobalEvents() {
     DOM.servantImageFile?.addEventListener('change', handleImageSelect);
 
     // --- New Excel Import Events ---
-    document.getElementById('excelFile')?.addEventListener('change', function() {
+    document.getElementById('excelFile')?.addEventListener('change', function () {
         const btn = document.getElementById('importPreviewBtn');
         if (btn) btn.disabled = !this.files.length;
     });
@@ -247,6 +250,23 @@ function bindGlobalEvents() {
 
     // ── Events ──────────────────────────────────────────────
     document.getElementById('createNewEventBtn')?.addEventListener('click', () => openCreateEventModal());
+
+    // ── User Management (Admin Only) ─────────────────────────────
+    document.getElementById('createNewUserBtn')?.addEventListener('click', () => {
+        import('./users.js').then(m => m.openUserModal());
+    });
+
+    document.getElementById('userManagementForm')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        import('./users.js').then(m => m.handleUserSave());
+    });
+
+    document.getElementById('usersTableBody')?.addEventListener('click', e => {
+        const editBtn = e.target.closest('.edit-user-btn');
+        const delBtn = e.target.closest('.delete-user-btn');
+        if (editBtn) import('./users.js').then(m => m.openUserModal(editBtn.dataset.id));
+        if (delBtn) import('./users.js').then(m => m.handleDeleteUser(delBtn.dataset.id));
+    });
     document.getElementById('eventsPageCreateBtn')?.addEventListener('click', () => openCreateEventModal());
     document.getElementById('createServiceEventForm')?.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -572,7 +592,7 @@ function bindGlobalEvents() {
     document.getElementById('serviceFilterFollowupDropdown')?.addEventListener('change', (e) => {
         const target = e.target;
         if (!AppState.absenceFilterSelectedServices) AppState.absenceFilterSelectedServices = new Set();
-        
+
         if (target.id === 'service-f-filter-all') {
             const isChecked = target.checked;
             document.querySelectorAll('.service-f-filter-checkbox').forEach(cb => {
@@ -584,7 +604,7 @@ function bindGlobalEvents() {
             const val = target.value;
             if (target.checked) AppState.absenceFilterSelectedServices.add(val);
             else AppState.absenceFilterSelectedServices.delete(val);
-            
+
             const allCb = document.getElementById('service-f-filter-all');
             if (allCb) {
                 const total = document.querySelectorAll('.service-f-filter-checkbox').length;
@@ -593,7 +613,7 @@ function bindGlobalEvents() {
                 allCb.indeterminate = (checked > 0 && checked < total);
             }
         }
-        
+
         const count = AppState.absenceFilterSelectedServices.size;
         const total = document.querySelectorAll('.service-f-filter-checkbox').length;
         const btnText = document.getElementById('serviceFilterFollowupBtnText');
@@ -602,7 +622,7 @@ function bindGlobalEvents() {
             else if (count === total) btnText.textContent = 'كل الخدمات';
             else btnText.textContent = `${count} خدمة محددة`;
         }
-        
+
         generateFollowUpReport();
     });
 
@@ -672,6 +692,15 @@ async function navigateTo(page) {
             break;
         case 'eventsPage':
             await renderServiceEvents('eventsPageContainer');
+            break;
+        case 'userManagementPage':
+            if (AppState.isGeneralSecretaryMode) {
+                showLoading(true);
+                import('./users.js').then(async m => {
+                    await m.initUserManagement();
+                    showLoading(false);
+                });
+            }
             break;
     }
 }
@@ -764,14 +793,14 @@ function initFollowUpPage() {
         const serviceDropdown = document.getElementById('serviceFilterFollowupDropdown');
         if (serviceDropdown && !serviceDropdown.dataset.initialized) {
             serviceDropdown.dataset.initialized = 'true';
-            
+
             const svcNames = SERVICES.filter(s => !s.isGroup).map(s => s.name);
             let dsHtml = `
             <div class="flex items-center p-2 border-b dark:border-slate-700 mb-1 rounded hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                 <input type="checkbox" id="service-f-filter-all" checked class="w-4 h-4 text-teal-600 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 rounded focus:ring-teal-500 ml-2 cursor-pointer">
                 <label for="service-f-filter-all" class="font-black cursor-pointer w-full text-slate-700 dark:text-slate-200">الكل</label>
             </div>`;
-            
+
             svcNames.forEach((svc, index) => {
                 dsHtml += `
                 <div class="flex items-center p-2 rounded hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
@@ -787,3 +816,118 @@ function initFollowUpPage() {
 
 // ─── App Init ─────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', bootstrap);
+
+// ─── PWA Installation & Service Worker ──────────────────────────
+let deferredPrompt = null;
+
+function initPWA() {
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(err => {
+            console.log('Service Worker registration failed: ', err);
+        });
+    }
+
+    // Always show the static install button (unless already installed as PWA)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (!isStandalone) {
+        const staticBanner = document.getElementById('staticInstallBanner');
+        if (staticBanner) staticBanner.classList.remove('hidden');
+    }
+
+    // Listen for beforeinstallprompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+    });
+
+    // Install App Button (bottom sheet)
+    document.getElementById('installAppBtn')?.addEventListener('click', () => triggerInstall());
+    // Static Install Button
+    document.getElementById('staticInstallBtn')?.addEventListener('click', () => triggerInstall());
+    // Close bottom sheet
+    document.getElementById('closeInstallPromptBtn')?.addEventListener('click', () => {
+        const p = document.getElementById('pwaInstallPrompt');
+        if (p) { p.classList.add('translate-y-full'); setTimeout(() => p.classList.add('hidden'), 500); }
+    });
+    // Close manual guide
+    document.getElementById('closeManualGuideBtn')?.addEventListener('click', () => {
+        document.getElementById('manualInstallGuide')?.classList.add('hidden');
+    });
+
+    // Hide everything when app is installed
+    window.addEventListener('appinstalled', () => {
+        deferredPrompt = null;
+        document.getElementById('pwaInstallPrompt')?.classList.add('hidden');
+        document.getElementById('staticInstallBanner')?.classList.add('hidden');
+        document.getElementById('manualInstallGuide')?.classList.add('hidden');
+    });
+}
+
+async function triggerInstall() {
+    if (deferredPrompt) {
+        // Browser supports auto-install
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log('Install outcome:', outcome);
+        deferredPrompt = null;
+        document.getElementById('staticInstallBanner')?.classList.add('hidden');
+        const p = document.getElementById('pwaInstallPrompt');
+        if (p) { p.classList.add('translate-y-full'); setTimeout(() => p.classList.add('hidden'), 500); }
+    } else {
+        // Show manual install guide
+        document.getElementById('manualInstallGuide')?.classList.remove('hidden');
+    }
+}
+
+// ─── Birthday Badges on Service Cards ───────────────────────────
+async function updateBirthdayBadges() {
+    try {
+        const { authReady, getDocs, collection } = await import('./firebase.js');
+        await authReady;
+        if (AppState.isLocalMode) return;
+
+        const today = new Date();
+        const todayMonth = today.getMonth() + 1;
+        const todayDay = today.getDate();
+
+        for (const service of SERVICES.filter(s => !s.isGroup)) {
+            try {
+                const col = collection(AppState.db, 'services', service.name, 'servants');
+                const snap = await getDocs(col);
+                let birthdayCount = 0;
+                snap.docs.forEach(d => {
+                    const dob = d.data().dob;
+                    if (!dob) return;
+                    const parts = dob.split('-');
+                    if (parts.length >= 3) {
+                        const m = parseInt(parts[1]);
+                        const day = parseInt(parts[2]);
+                        if (m === todayMonth && day === todayDay) birthdayCount++;
+                    }
+                });
+                if (birthdayCount > 0) {
+                    const badgeId = `birthday-badge-${service.name.replace(/\s+/g, '-')}`;
+                    let badge = document.getElementById(badgeId);
+                    if (!badge) {
+                        // Create birthday badge element next to existing announcement badge
+                        const announcementBadge = document.getElementById(`service-badge-${service.name.replace(/\s+/g, '-')}`);
+                        if (announcementBadge && announcementBadge.parentElement) {
+                            const iconContainer = announcementBadge.parentElement;
+                            badge = document.createElement('span');
+                            badge.id = badgeId;
+                            badge.className = 'absolute -top-1.5 -left-1.5 bg-pink-500 text-white text-[10px] font-bold rounded-full min-w-[20px] h-[20px] flex items-center justify-center shadow-lg border-2 border-slate-800 animate-bounce';
+                            badge.title = '🎂 عيد ميلاد اليوم!';
+                            iconContainer.appendChild(badge);
+                        }
+                    }
+                    if (badge) {
+                        badge.textContent = '🎂';
+                        badge.classList.remove('hidden-view');
+                    }
+                }
+            } catch (e) { /* skip this service */ }
+        }
+    } catch (e) { console.error('Birthday badges error:', e); }
+}
+

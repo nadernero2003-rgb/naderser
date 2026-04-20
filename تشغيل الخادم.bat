@@ -21,7 +21,7 @@ if %errorlevel% NEQ 0 (
     echo  1. افتح VS Code
     echo  2. افتح الـ Terminal من قائمة Terminal
     echo  3. اكتب الأمر:  npx serve .
-    echo  4. افتح المتصفح على: http://localhost:3080
+    echo  4. افتح المتصفح على: http://localhost:4000
     echo.
     pause
     exit /b 1
@@ -31,11 +31,11 @@ echo  تم ايجاد Node.js ✓
 echo  جاري تشغيل الخادم...
 echo.
 echo  ════════════════════════════════════════════════════
-echo    افتح المتصفح على:  http://localhost:3080
+echo    افتح المتصفح على:  http://localhost:4000
 echo  ════════════════════════════════════════════════════
 echo.
 
-start "" http://localhost:3080
+start "" http://localhost:4000
 node "%~dp0server.js"
 
 pause

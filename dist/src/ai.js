@@ -116,11 +116,11 @@ export async function generateContent(prompt) {
             const discoveryRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
             if (discoveryRes.ok) {
                 const discoveryData = await discoveryRes.json();
-                const availableGemini = discoveryData.models?.filter(m => 
-                    m.supportedGenerationMethods?.includes('generateContent') && 
+                const availableGemini = discoveryData.models?.filter(m =>
+                    m.supportedGenerationMethods?.includes('generateContent') &&
                     m.name.includes('gemini')
                 );
-                
+
                 if (availableGemini && availableGemini.length > 0) {
                     const dynamicModelName = availableGemini[0].name.replace('models/', '');
                     console.log(`[AI] Discovered model: ${dynamicModelName}, trying it...`);
@@ -227,6 +227,8 @@ ${periodsText}
 // ─── Settings Save ────────────────────────────────────────────────
 export async function handleSettingsSave(e) {
     e.preventDefault();
+
+    // Save Gemini Key
     const key = DOM.geminiApiKeyInput?.value?.trim();
     if (key) {
         await saveGeminiKeyToFirestore(key);
@@ -235,6 +237,21 @@ export async function handleSettingsSave(e) {
         localStorage.removeItem('geminiApiKey');
         showMessage('تم حذف مفتاح API', true);
     }
+
+    // Save Settings Password
+    const newPass = document.getElementById('systemSettingsPasswordInput')?.value?.trim();
+    if (newPass) {
+        try {
+            const { doc, setDoc } = await import('./firebase.js');
+            await setDoc(doc(AppState.db, 'system_settings', 'main'), { settingsPassword: newPass }, { merge: true });
+            showMessage('تم حفظ كلمة السر الجديدة بنجاح', false);
+            document.getElementById('systemSettingsPasswordInput').value = '';
+        } catch (err) {
+            console.error("Save system pass err", err);
+            showMessage('حدث خطأ أثناء حفظ كلمة السر!', true);
+        }
+    }
+
     const modal = document.getElementById('settingsModal');
     if (modal) { modal.classList.add('hidden-view'); modal.classList.remove('flex'); }
 }

@@ -7,7 +7,7 @@ import {
     getAuth, signInAnonymously, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import {
-    getFirestore,
+    getFirestore, enableIndexedDbPersistence,
     collection, addDoc, onSnapshot, doc,
     deleteDoc, setDoc, getDoc, getDocs, updateDoc,
     query, where, writeBatch, orderBy, serverTimestamp
@@ -25,6 +25,14 @@ export async function initFirebase() {
     try {
         const app = initializeApp(FIREBASE_CONFIG);
         AppState.db = getFirestore(app);
+        
+        // Enable offline persistence for lighting-fast UI loads on repeated visits
+        try {
+            await enableIndexedDbPersistence(AppState.db);
+        } catch (err) {
+            console.warn("Firestore offline persistence could not be enabled", err);
+        }
+
         AppState.auth = getAuth(app);
         AppState.isLocalMode = false;
 

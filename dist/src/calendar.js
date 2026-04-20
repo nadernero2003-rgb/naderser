@@ -103,9 +103,9 @@ export function renderCalendar() {
     const firstDay = new Date(year, month, 1);
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const today = new Date();
-    todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+    todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-    const dowAr = ['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
+    const dowAr = ['أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
     let html = `
         <div class="mb-4 flex items-center justify-between">
             <h2 class="text-xl font-bold text-teal-600 dark:text-teal-400">
@@ -134,8 +134,8 @@ export function renderCalendar() {
         else cellClass += ' border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800';
 
         const eventBadges = events.map(e => {
-            const svcHtml = e.serviceName && AppState.isGeneralSecretaryMode && DOM.calendarServiceSelector?.value === 'all' 
-                ? `<span class="opacity-80 text-[9px] block">(${e.serviceName})</span>` 
+            const svcHtml = e.serviceName && AppState.isGeneralSecretaryMode && DOM.calendarServiceSelector?.value === 'all'
+                ? `<span class="opacity-80 text-[9px] block">(${e.serviceName})</span>`
                 : '';
             return `<span class="text-[10px] font-bold text-white px-1 py-0.5 rounded ${EVENT_TYPES[e.type] || 'bg-teal-500'} block w-full text-center leading-tight truncate" title="${e.type}">${e.type}${svcHtml}</span>`;
         }).join('');
@@ -162,7 +162,7 @@ function openCalendarEventModal(dateStr) {
     const events = AppState.calendarEventsCache[dateStr] || [];
     const isGS = AppState.isGeneralSecretaryMode;
     const form = DOM.calendarEventForm;
-    
+
     DOM.eventModalDate.textContent = dateStr;
     DOM.eventDate.value = dateStr;
 
@@ -189,17 +189,17 @@ function openCalendarEventModal(dateStr) {
                 </div>`;
         } else {
             const colors = {
-                teal:   { border: '#2dd4bf', bg: '#f0fdfa', darkBg: '#042f2e', text: '#0d9488' },
-                lime:   { border: '#a3e635', bg: '#f7fee7', darkBg: '#1a2e05', text: '#65a30d' },
-                green:  { border: '#4ade80', bg: '#f0fdf4', darkBg: '#052e16', text: '#16a34a' },
+                teal: { border: '#2dd4bf', bg: '#f0fdfa', darkBg: '#042f2e', text: '#0d9488' },
+                lime: { border: '#a3e635', bg: '#f7fee7', darkBg: '#1a2e05', text: '#65a30d' },
+                green: { border: '#4ade80', bg: '#f0fdf4', darkBg: '#052e16', text: '#16a34a' },
                 yellow: { border: '#facc15', bg: '#fefce8', darkBg: '#2d1f00', text: '#ca8a04' },
-                pink:   { border: '#f472b6', bg: '#fdf2f8', darkBg: '#2d0a1e', text: '#db2777' },
+                pink: { border: '#f472b6', bg: '#fdf2f8', darkBg: '#2d0a1e', text: '#db2777' },
                 indigo: { border: '#818cf8', bg: '#eef2ff', darkBg: '#1e1b4b', text: '#4f46e5' },
-                red:    { border: '#fb7185', bg: '#fef2f2', darkBg: '#2d0707', text: '#dc2626' },
+                red: { border: '#fb7185', bg: '#fef2f2', darkBg: '#2d0707', text: '#dc2626' },
                 purple: { border: '#c084fc', bg: '#faf5ff', darkBg: '#1a0838', text: '#9333ea' },
-                cyan:   { border: '#22d3ee', bg: '#ecfeff', darkBg: '#042830', text: '#0891b2' },
+                cyan: { border: '#22d3ee', bg: '#ecfeff', darkBg: '#042830', text: '#0891b2' },
                 orange: { border: '#fb923c', bg: '#fff7ed', darkBg: '#2d1200', text: '#ea580c' },
-                blue:   { border: '#60a5fa', bg: '#eff6ff', darkBg: '#0c1a3d', text: '#2563eb' }
+                blue: { border: '#60a5fa', bg: '#eff6ff', darkBg: '#0c1a3d', text: '#2563eb' }
             };
             const isDark = document.documentElement.classList.contains('dark');
 

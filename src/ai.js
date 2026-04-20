@@ -227,6 +227,8 @@ ${periodsText}
 // ─── Settings Save ────────────────────────────────────────────────
 export async function handleSettingsSave(e) {
     e.preventDefault();
+
+    // Save Gemini Key
     const key = DOM.geminiApiKeyInput?.value?.trim();
     if (key) {
         await saveGeminiKeyToFirestore(key);
@@ -235,6 +237,21 @@ export async function handleSettingsSave(e) {
         localStorage.removeItem('geminiApiKey');
         showMessage('تم حذف مفتاح API', true);
     }
+
+    // Save Settings Password
+    const newPass = document.getElementById('systemSettingsPasswordInput')?.value?.trim();
+    if (newPass) {
+        try {
+            const { doc, setDoc } = await import('./firebase.js');
+            await setDoc(doc(AppState.db, 'system_settings', 'main'), { settingsPassword: newPass }, { merge: true });
+            showMessage('تم حفظ كلمة السر الجديدة بنجاح', false);
+            document.getElementById('systemSettingsPasswordInput').value = '';
+        } catch (err) {
+            console.error("Save system pass err", err);
+            showMessage('حدث خطأ أثناء حفظ كلمة السر!', true);
+        }
+    }
+
     const modal = document.getElementById('settingsModal');
     if (modal) { modal.classList.add('hidden-view'); modal.classList.remove('flex'); }
 }

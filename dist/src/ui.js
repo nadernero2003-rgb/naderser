@@ -9,83 +9,85 @@ export const DOM = {};
 
 export function initDOM() {
     const ids = [
-        'loadingOverlay','loginOrServicesView','mainDashboard','servicesGrid',
-        'sidebar','sidebarOverlay','sidebarLinks','mobilePageTitle','hamburgerBtn',
+        'loadingOverlay', 'loginOrServicesView', 'mainDashboard', 'servicesGrid',
+        'sidebar', 'sidebarOverlay', 'sidebarLinks', 'mobilePageTitle', 'hamburgerBtn',
         // Pages
-        'homePage','servantsPage','attendancePage','reportsPage',
-        'calendarPage','correspondencePage','correspondenceCenterPage',
-        'followUpPage','serviceAnnouncementsPage','announcementsBoardPage', 'eventsPage',
+        'homePage', 'servantsPage', 'attendancePage', 'reportsPage',
+        'calendarPage', 'correspondencePage', 'correspondenceCenterPage',
+        'followUpPage', 'serviceAnnouncementsPage', 'announcementsBoardPage', 'eventsPage',
+        'userManagementPage',
         // Sidebar links
-        'correspondenceLink','followUpLink','attendancePageLink','correspondenceCenterLink',
-        'serviceAnnouncementsLink','announcementsBoardLink','comparisonReportTab','calendarPageLink',
+        'correspondenceLink', 'followUpLink', 'attendancePageLink', 'correspondenceCenterLink',
+        'serviceAnnouncementsLink', 'announcementsBoardLink', 'comparisonReportTab', 'calendarPageLink',
+        'userManagementLink',
         // Servants Page
-        'servantsTableBody','serviceColumnHeader','serviceFilterGroup','servantServiceFilter','birthdayAlertsContainer','servantsViewToggle',
-        'searchInput','addManualBtn','importExcelBtn','exportServantsExcelBtn',
-        'manualEntryModal','manualEntryModalTitle','manualEntryForm',
-        'servantId','servantName','servantMobile','servantDob','servantNationalId',
-        'servantChapter','servantCurrentService','servantJoinDate','servantJob','servantAddress','servantQualification',
-        'servantConfessionFather','servantImageFile','imagePreview',
+        'servantsTableBody', 'serviceColumnHeader', 'serviceFilterGroup', 'servantServiceFilter', 'birthdayAlertsContainer', 'servantsViewToggle',
+        'searchInput', 'addManualBtn', 'importExcelBtn', 'exportServantsExcelBtn',
+        'manualEntryModal', 'manualEntryModalTitle', 'manualEntryForm',
+        'servantId', 'servantName', 'servantMobile', 'servantDob', 'servantNationalId',
+        'servantChapter', 'servantCurrentService', 'servantJoinDate', 'servantJob', 'servantAddress', 'servantQualification',
+        'servantConfessionFather', 'servantImageFile', 'imagePreview',
         // Attendance Page
-        'yearSelector','monthSelector','fridaysGrid','activityButtons',
-        'attendanceListContainer','attendanceListTitle','noActivitySection',
-        'noActivityCheck','isSpecialCheck','specialReasonInput',
-        'servantsChecklist','saveActivityAttendanceBtn',
+        'yearSelector', 'monthSelector', 'fridaysGrid', 'activityButtons',
+        'attendanceListContainer', 'attendanceListTitle', 'noActivitySection',
+        'noActivityCheck', 'isSpecialCheck', 'specialReasonInput',
+        'servantsChecklist', 'saveActivityAttendanceBtn',
         // Reports Page
-        'reportTabs','standardReportsContainer','comparisonReportContainer',
-        'periodComparisonReportContainer','reportFilters','reportOutput','reportContent',
-        'reportStartDate','reportEndDate','reportServantSelector','reportServiceSelector',
-        'reportActivitySelector','servantSelectorContainer','activitySelectorContainer',
-        'serviceFilterContainer','generateReportBtn','exportPngBtn','exportPdfBtn',
-        'generateComparisonBtn','comparisonChart','comparisonServiceSelector1',
-        'comparisonServiceSelector2','periodsContainer','addPeriodBtn',
-        'generatePeriodComparisonBtn','periodReportOutput','periodReportServantSelector',
+        'reportTabs', 'standardReportsContainer', 'comparisonReportContainer',
+        'periodComparisonReportContainer', 'reportFilters', 'reportOutput', 'reportContent',
+        'reportStartDate', 'reportEndDate', 'reportServantSelector', 'reportServiceSelector',
+        'reportActivitySelector', 'servantSelectorContainer', 'activitySelectorContainer',
+        'serviceFilterContainer', 'generateReportBtn', 'exportPngBtn', 'exportPdfBtn',
+        'generateComparisonBtn', 'comparisonChart', 'comparisonServiceSelector1',
+        'comparisonServiceSelector2', 'periodsContainer', 'addPeriodBtn',
+        'generatePeriodComparisonBtn', 'periodReportOutput', 'periodReportServantSelector',
         // Calendar Page
-        'calendarContent','calendarYearSelector','calendarMonthSelector',
-        'calendarServiceFilterContainer','calendarServiceSelector',
-        'calendarEventModal','eventModalDate','calendarEventForm','eventDate',
-        'eventTypeSelector','eventDetailsInput','deleteEventBtn','saveEventBtn',
+        'calendarContent', 'calendarYearSelector', 'calendarMonthSelector',
+        'calendarServiceFilterContainer', 'calendarServiceSelector',
+        'calendarEventModal', 'eventModalDate', 'calendarEventForm', 'eventDate',
+        'eventTypeSelector', 'eventDetailsInput', 'deleteEventBtn', 'saveEventBtn',
         // Home Page elements
-        'serviceDashboardContainer','adminDashboardContainer',
-        'totalServantsStat','upcomingBirthdayStat','lastFridayAbsenceStat',
-        'lastFridayAbsenceCount','lastFridayStatusContainer',
-        'absenceFollowUpResults','absenceFilterYearSelector',
-        'monthFilterBtn','monthFilterBtnText','monthFilterDropdown','activityFilterButtons',
-        'homeAttendanceChart','kpiContainer','adminServantsTableBody','adminAttendanceChart',
-        'adminSearchInput','quickAddServant','quickGoToAttendance','backupBtn','restoreBtn',
-        'backupRestoreSection','generateFollowUpBtn',
+        'serviceDashboardContainer', 'adminDashboardContainer',
+        'totalServantsStat', 'upcomingBirthdayStat', 'lastFridayAbsenceStat',
+        'lastFridayAbsenceCount', 'lastFridayStatusContainer',
+        'absenceFollowUpResults', 'absenceFilterYearSelector',
+        'monthFilterBtn', 'monthFilterBtnText', 'monthFilterDropdown', 'activityFilterButtons',
+        'homeAttendanceChart', 'kpiContainer', 'adminServantsTableBody', 'adminAttendanceChart',
+        'adminSearchInput', 'quickAddServant', 'quickGoToAttendance', 'backupBtn', 'restoreBtn',
+        'backupRestoreSection', 'generateFollowUpBtn',
         // Announcements Board
-        'announcementTarget','newAnnouncementInput','addAnnouncementBtn','adminAnnouncementsList',
+        'announcementTarget', 'newAnnouncementInput', 'addAnnouncementBtn', 'adminAnnouncementsList',
         // Correspondence
-        'incomingNotesContainer','noteToAdminInput','sendNoteToAdminBtn','sentNotesHistory',
+        'incomingNotesContainer', 'noteToAdminInput', 'sendNoteToAdminBtn', 'sentNotesHistory',
         // Follow-up
-        'attendanceFollowUpPanel','followUpPanel','birthdaysPanel',
-        'followUpSearchInput','clearSearchBtn',
-        'followUpGridViewBtn','followUpTableViewBtn',
+        'attendanceFollowUpPanel', 'followUpPanel', 'birthdaysPanel',
+        'followUpSearchInput', 'clearSearchBtn',
+        'followUpGridViewBtn', 'followUpTableViewBtn',
         // Service Announcements
-        'bulletinBoard','bulletinBoardTitle','loadMoreAnnouncementsBtn','loadMoreAnnouncementsContainer',
+        'bulletinBoard', 'bulletinBoardTitle', 'loadMoreAnnouncementsBtn', 'loadMoreAnnouncementsContainer',
         // Aggregated Events Modal
-        'aggregatedEventsModal','aggregatedEventsModalTitle','aggregatedEventsModalBody',
+        'aggregatedEventsModal', 'aggregatedEventsModalTitle', 'aggregatedEventsModalBody',
         // Modals
-        'confirmModal','passwordModal','servicePasswordInput','passwordModalServiceName',
-        'serviceChoiceModal','serviceChoiceModalTitle','serviceChoiceModalBody',
-        'importModal','importForm','excelFile',
-        'unifiedProfileModal','unifiedProfileModalTitle','unifiedProfileModalBody',
-        'activityAttendeesModal','activityAttendeesModalTitle','activityAttendeesModalBody',
+        'confirmModal', 'passwordModal', 'servicePasswordInput', 'passwordModalServiceName',
+        'serviceChoiceModal', 'serviceChoiceModalTitle', 'serviceChoiceModalBody',
+        'importModal', 'importForm', 'excelFile',
+        'unifiedProfileModal', 'unifiedProfileModalTitle', 'unifiedProfileModalBody',
+        'activityAttendeesModal', 'activityAttendeesModalTitle', 'activityAttendeesModalBody',
         // Settings
-        'settingsModal','geminiApiKeyInput',
-        'settingsPasswordModal','settingsPasswordInput',
+        'settingsModal', 'geminiApiKeyInput',
+        'settingsPasswordModal', 'settingsPasswordInput',
         // Service Events
-        'serviceEventsSection','serviceEventsContainer',
-        'createServiceEventModal','serviceEventAttendanceModal',
-        'eventAttendanceModalTitle','eventAttendanceModalBody',
+        'serviceEventsSection', 'serviceEventsContainer',
+        'createServiceEventModal', 'serviceEventAttendanceModal',
+        'eventAttendanceModalTitle', 'eventAttendanceModalBody',
         // AI Greeting Modal
-        'aiGreetingModal','aiGreetingModalBody','aiGreetingActions','copyGreetingBtn','whatsappGreetingBtn',
+        'aiGreetingModal', 'aiGreetingModalBody', 'aiGreetingActions', 'copyGreetingBtn', 'whatsappGreetingBtn',
         // Sidebar UI
-        'sidebarServiceName','backToServices','logoutBtn','theme-checkbox',
+        'sidebarServiceName', 'backToServices', 'logoutBtn', 'theme-checkbox',
         // iFrame
-        'iframeView','iframeTitle','iframeLoading','externalAppFrame','backFromIframeBtn',
+        'iframeView', 'iframeTitle', 'iframeLoading', 'externalAppFrame', 'backFromIframeBtn',
         // Notification badges
-        'correspondenceBadge','serviceAnnouncementsBadge','correspondenceCenterBadge',
+        'correspondenceBadge', 'serviceAnnouncementsBadge', 'correspondenceCenterBadge',
     ];
 
     ids.forEach(id => { DOM[id] = document.getElementById(id); });
@@ -121,7 +123,7 @@ export function showConfirm(title, body, onConfirm) {
     openModal(DOM.confirmModal);
 
     const confirmBtn = document.getElementById('confirmModalConfirmBtn');
-    const cancelBtn  = document.getElementById('confirmModalCancelBtn');
+    const cancelBtn = document.getElementById('confirmModalCancelBtn');
 
     const fresh = confirmBtn.cloneNode(true);
     confirmBtn.parentNode.replaceChild(fresh, confirmBtn);
@@ -244,14 +246,14 @@ export function getPercentageTextColor(p) {
 export function formatDateAr(dateStr) {
     if (!dateStr) return 'غير محدد';
     const [y, m, d] = dateStr.split('-').map(Number);
-    return new Date(y, m-1, d).toLocaleDateString('ar-EG', {
+    return new Date(y, m - 1, d).toLocaleDateString('ar-EG', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
 }
 
 export function getUpcomingBirthdays(servants, daysAhead = 30) {
     const today = new Date();
-    today.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
     return servants
         .filter(s => s.dob && typeof s.dob === 'string')
         .map(s => {
@@ -259,7 +261,7 @@ export function getUpcomingBirthdays(servants, daysAhead = 30) {
             if (parts.length !== 3) return null;
             const [y, m, d] = parts.map(Number);
             if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
-            let next = new Date(today.getFullYear(), m-1, d);
+            let next = new Date(today.getFullYear(), m - 1, d);
             if (next < today) next.setFullYear(today.getFullYear() + 1);
             const diff = Math.round((next - today) / 86400000);
             return { ...s, daysUntil: diff, date: `${d}/${m}` };
@@ -270,6 +272,6 @@ export function getUpcomingBirthdays(servants, daysAhead = 30) {
 
 export function getSafeSrc(url) {
     return url && url.startsWith('data:') ? url :
-           (url && url.startsWith('http') ? url :
-           'https://placehold.co/60x60/E2E8F0/4A5568?text=?');
+        (url && url.startsWith('http') ? url :
+            'https://placehold.co/60x60/E2E8F0/4A5568?text=?');
 }

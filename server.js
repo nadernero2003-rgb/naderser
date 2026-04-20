@@ -6,7 +6,7 @@ const http = require('http');
 const fs   = require('fs');
 const path = require('path');
 
-const PORT = 3080;
+const PORT = 4000;
 const ROOT = __dirname;
 
 const MIME = {

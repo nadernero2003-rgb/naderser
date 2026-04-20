@@ -9,7 +9,7 @@ import {
     DOM, initDOM, showLoading, showMessage, openModal, closeModal,
     initCloseButtons, toggleTheme, switchPage, applyTheme
 } from './ui.js';
-import { handlePasswordSubmit, handleServiceCardClick, logout, openSettings, handleSettingsPasswordSubmit } from './auth.js';
+import { handlePasswordSubmit, handleServiceCardClick, logout, openSettings, handleSettingsPasswordSubmit, bootstrapFirstAdmin } from './auth.js';
 import { handleSettingsSave } from './ai.js';
 import {
     loadServants, openAddModal, openEditModal, handleServantFormSubmit,
@@ -111,13 +111,15 @@ window.generateAndShowAIGreeting = async function (name) {
 // ─── Bootstrap ────────────────────────────────────────────────────
 async function bootstrap() {
     initDOM();
-    setupAttendanceUIListeners();
-    await initFirebase();
     initCloseButtons();
-    renderServicesGrid();
+    renderServicesGrid();    // Show UI immediately
     bindGlobalEvents();
-    await updateServiceCardBadges();
-    showLoading(false);
+    showLoading(false);      // Hide loading ASAP so user sees cards
+    setupAttendanceUIListeners();
+    await initFirebase();    // Connect to DB in background
+    updateServiceCardBadges();
+    updateBirthdayBadges();  // Check for today's birthdays
+    initPWA();               // Setup install logic
 }
 
 // ─── Service Selection Grid ────────────────────────────────────────
@@ -130,25 +132,25 @@ function renderServicesGrid() {
         const badgeId = `service-badge-${svc.name.replace(/\s+/g, '-')}`;
 
         return `
-        <div class="service-card group relative flex flex-col items-center justify-center p-5 md:p-6 rounded-2xl cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:scale-[1.03] active:scale-[0.98]"
+        <div class="service-card group relative flex flex-col items-center justify-center p-6 md:p-7 rounded-3xl cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:scale-[1.03] active:scale-[0.98]"
              data-service="${svc.name}"
-             style="background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(148, 163, 184, 0.12); box-shadow: 0 4px 24px -4px rgba(0,0,0,0.3);">
+             style="background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.95)); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(148, 163, 184, 0.15); box-shadow: 0 8px 32px -4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);">
              
             <!-- Hover glow effect -->
-            <div class="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+            <div class="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                  style="background: radial-gradient(circle at 50% 50%, ${c.icon}15, transparent 70%); box-shadow: 0 8px 40px -8px ${c.icon}30;"></div>
             
             <!-- Top accent line -->
             <div class="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-[2px] rounded-full opacity-60 group-hover:w-20 group-hover:opacity-100 transition-all duration-500"
                  style="background: linear-gradient(90deg, transparent, ${c.icon}, transparent);"></div>
 
-            <div class="relative w-14 h-14 md:w-16 md:h-16 flex items-center justify-center rounded-2xl mb-3 transition-all duration-300 group-hover:shadow-lg"
-                 style="background: linear-gradient(135deg, ${c.icon}18, ${c.icon}08); border: 1px solid ${c.icon}30; box-shadow: 0 0 0 0 ${c.icon}00;">
-                <i class="fas ${svc.icon} text-xl md:text-2xl transition-transform duration-300 group-hover:scale-110" style="color: ${c.icon};"></i>
+            <div class="relative w-16 h-16 md:w-18 md:h-18 flex items-center justify-center rounded-2xl mb-3 transition-all duration-300 group-hover:shadow-lg"
+                 style="background: linear-gradient(135deg, ${c.icon}22, ${c.icon}0a); border: 1px solid ${c.icon}35;">
+                <i class="fas ${svc.icon} text-2xl md:text-3xl transition-transform duration-300 group-hover:scale-110" style="color: ${c.icon};"></i>
                 <span id="${badgeId}" class="hidden-view absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[20px] h-[20px] flex items-center justify-center shadow-lg border-2 border-slate-800 animate-pulse">0</span>
             </div>
             
-            <p class="relative font-bold text-xs md:text-sm text-center text-slate-200 group-hover:text-white transition-colors duration-300 leading-tight">
+            <p class="relative font-bold text-sm md:text-base text-center text-slate-200 group-hover:text-white transition-colors duration-300 leading-tight">
                 ${svc.name}
             </p>
         </div>`;
@@ -169,6 +171,7 @@ function bindGlobalEvents() {
     DOM['theme-checkbox']?.addEventListener('change', toggleTheme);
     document.getElementById('openSettingsBtn')?.addEventListener('click', openSettings);
     document.getElementById('settingsForm')?.addEventListener('submit', handleSettingsSave);
+    document.getElementById('bootstrapAdminBtn')?.addEventListener('click', bootstrapFirstAdmin);
 
     // ── Settings Password Modal ────────────────────────────────────
     document.getElementById('settingsPasswordForm')?.addEventListener('submit', handleSettingsPasswordSubmit);
@@ -247,6 +250,23 @@ function bindGlobalEvents() {
 
     // ── Events ──────────────────────────────────────────────
     document.getElementById('createNewEventBtn')?.addEventListener('click', () => openCreateEventModal());
+
+    // ── User Management (Admin Only) ─────────────────────────────
+    document.getElementById('createNewUserBtn')?.addEventListener('click', () => {
+        import('./users.js').then(m => m.openUserModal());
+    });
+
+    document.getElementById('userManagementForm')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        import('./users.js').then(m => m.handleUserSave());
+    });
+
+    document.getElementById('usersTableBody')?.addEventListener('click', e => {
+        const editBtn = e.target.closest('.edit-user-btn');
+        const delBtn = e.target.closest('.delete-user-btn');
+        if (editBtn) import('./users.js').then(m => m.openUserModal(editBtn.dataset.id));
+        if (delBtn) import('./users.js').then(m => m.handleDeleteUser(delBtn.dataset.id));
+    });
     document.getElementById('eventsPageCreateBtn')?.addEventListener('click', () => openCreateEventModal());
     document.getElementById('createServiceEventForm')?.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -673,6 +693,15 @@ async function navigateTo(page) {
         case 'eventsPage':
             await renderServiceEvents('eventsPageContainer');
             break;
+        case 'userManagementPage':
+            if (AppState.isGeneralSecretaryMode) {
+                showLoading(true);
+                import('./users.js').then(async m => {
+                    await m.initUserManagement();
+                    showLoading(false);
+                });
+            }
+            break;
     }
 }
 
@@ -787,3 +816,118 @@ function initFollowUpPage() {
 
 // ─── App Init ─────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', bootstrap);
+
+// ─── PWA Installation & Service Worker ──────────────────────────
+let deferredPrompt = null;
+
+function initPWA() {
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(err => {
+            console.log('Service Worker registration failed: ', err);
+        });
+    }
+
+    // Always show the static install button (unless already installed as PWA)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (!isStandalone) {
+        const staticBanner = document.getElementById('staticInstallBanner');
+        if (staticBanner) staticBanner.classList.remove('hidden');
+    }
+
+    // Listen for beforeinstallprompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+    });
+
+    // Install App Button (bottom sheet)
+    document.getElementById('installAppBtn')?.addEventListener('click', () => triggerInstall());
+    // Static Install Button
+    document.getElementById('staticInstallBtn')?.addEventListener('click', () => triggerInstall());
+    // Close bottom sheet
+    document.getElementById('closeInstallPromptBtn')?.addEventListener('click', () => {
+        const p = document.getElementById('pwaInstallPrompt');
+        if (p) { p.classList.add('translate-y-full'); setTimeout(() => p.classList.add('hidden'), 500); }
+    });
+    // Close manual guide
+    document.getElementById('closeManualGuideBtn')?.addEventListener('click', () => {
+        document.getElementById('manualInstallGuide')?.classList.add('hidden');
+    });
+
+    // Hide everything when app is installed
+    window.addEventListener('appinstalled', () => {
+        deferredPrompt = null;
+        document.getElementById('pwaInstallPrompt')?.classList.add('hidden');
+        document.getElementById('staticInstallBanner')?.classList.add('hidden');
+        document.getElementById('manualInstallGuide')?.classList.add('hidden');
+    });
+}
+
+async function triggerInstall() {
+    if (deferredPrompt) {
+        // Browser supports auto-install
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log('Install outcome:', outcome);
+        deferredPrompt = null;
+        document.getElementById('staticInstallBanner')?.classList.add('hidden');
+        const p = document.getElementById('pwaInstallPrompt');
+        if (p) { p.classList.add('translate-y-full'); setTimeout(() => p.classList.add('hidden'), 500); }
+    } else {
+        // Show manual install guide
+        document.getElementById('manualInstallGuide')?.classList.remove('hidden');
+    }
+}
+
+// ─── Birthday Badges on Service Cards ───────────────────────────
+async function updateBirthdayBadges() {
+    try {
+        const { authReady, getDocs, collection } = await import('./firebase.js');
+        await authReady;
+        if (AppState.isLocalMode) return;
+
+        const today = new Date();
+        const todayMonth = today.getMonth() + 1;
+        const todayDay = today.getDate();
+
+        for (const service of SERVICES.filter(s => !s.isGroup)) {
+            try {
+                const col = collection(AppState.db, 'services', service.name, 'servants');
+                const snap = await getDocs(col);
+                let birthdayCount = 0;
+                snap.docs.forEach(d => {
+                    const dob = d.data().dob;
+                    if (!dob) return;
+                    const parts = dob.split('-');
+                    if (parts.length >= 3) {
+                        const m = parseInt(parts[1]);
+                        const day = parseInt(parts[2]);
+                        if (m === todayMonth && day === todayDay) birthdayCount++;
+                    }
+                });
+                if (birthdayCount > 0) {
+                    const badgeId = `birthday-badge-${service.name.replace(/\s+/g, '-')}`;
+                    let badge = document.getElementById(badgeId);
+                    if (!badge) {
+                        // Create birthday badge element next to existing announcement badge
+                        const announcementBadge = document.getElementById(`service-badge-${service.name.replace(/\s+/g, '-')}`);
+                        if (announcementBadge && announcementBadge.parentElement) {
+                            const iconContainer = announcementBadge.parentElement;
+                            badge = document.createElement('span');
+                            badge.id = badgeId;
+                            badge.className = 'absolute -top-1.5 -left-1.5 bg-pink-500 text-white text-[10px] font-bold rounded-full min-w-[20px] h-[20px] flex items-center justify-center shadow-lg border-2 border-slate-800 animate-bounce';
+                            badge.title = '🎂 عيد ميلاد اليوم!';
+                            iconContainer.appendChild(badge);
+                        }
+                    }
+                    if (badge) {
+                        badge.textContent = '🎂';
+                        badge.classList.remove('hidden-view');
+                    }
+                }
+            } catch (e) { /* skip this service */ }
+        }
+    } catch (e) { console.error('Birthday badges error:', e); }
+}
+

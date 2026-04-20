@@ -83,8 +83,8 @@ export function populateFridaysGrid(year, month) {
                 const actData = dayData[act.key];
                 const color = actData?.attendees?.length > 0 ? act.border
                     : actData?.note ? '#facc15'
-                    : actData ? '#f87171'
-                    : '#d1d5db';
+                        : actData ? '#f87171'
+                            : '#d1d5db';
                 return `<span style="background:${color}" class="block w-3 h-3 rounded-full border border-white/60 shadow-sm"></span>`;
             }).join('');
 
@@ -135,7 +135,7 @@ export function renderActivityButtons(date) {
 export function getServantHistoryStatusForDate(servantId, currentDateStr, attendanceCache) {
     let consecutiveAbsences = 0;
     let isExcused = false;
-    
+
     // Check previous 4 weeks strictly BEFORE the currentDateStr
     const currentDate = new Date(currentDateStr);
     for (let i = 1; i <= 4; i++) {
@@ -144,23 +144,21 @@ export function getServantHistoryStatusForDate(servantId, currentDateStr, attend
         const y = pDate.getFullYear(), m = String(pDate.getMonth() + 1).padStart(2, '0'), d = String(pDate.getDate()).padStart(2, '0');
         const pDateStr = `${y}-${m}-${d}`;
         const pDayData = attendanceCache[pDateStr] || {};
-        
+
         let anyAttendanceThatWeek = false;
         let attendedThatWeek = false;
         let excusedThatWeek = (pDayData['apology']?.attendees || []).includes(servantId);
-        
-        ACTIVITIES.filter(a => a.key !== 'apology').forEach(act => {
-            const actData = pDayData[act.key];
-            if (actData && !actData.isSpecial) {
-                anyAttendanceThatWeek = true;
-                if ((actData.attendees || []).includes(servantId)) {
-                    attendedThatWeek = true;
-                }
+
+        const actData = pDayData['service'];
+        if (actData && !actData.isSpecial) {
+            anyAttendanceThatWeek = true;
+            if ((actData.attendees || []).includes(servantId)) {
+                attendedThatWeek = true;
             }
-        });
-        
+        }
+
         if (!anyAttendanceThatWeek) continue;
-        
+
         if (!attendedThatWeek && !excusedThatWeek) {
             consecutiveAbsences++;
         } else if (excusedThatWeek && consecutiveAbsences === 0) {
@@ -170,7 +168,7 @@ export function getServantHistoryStatusForDate(servantId, currentDateStr, attend
             break; // Streak broken
         }
     }
-    
+
     if (isExcused) {
         return { type: 'excused', label: 'معتذر', colorClass: 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-700/50 text-yellow-800 dark:text-yellow-300', icon: 'fa-bed' };
     } else if (consecutiveAbsences > 0) {
@@ -239,7 +237,7 @@ export function renderServantChecklist(activityKey, date) {
 
 // ─── Setup Logic for Exclusive Checkboxes ────────────────────────
 export function setupAttendanceUIListeners() {
-    DOM.noActivityCheck?.addEventListener('change', function() {
+    DOM.noActivityCheck?.addEventListener('change', function () {
         if (this.checked) {
             DOM.isSpecialCheck.checked = false;
             DOM.specialReasonInput.classList.add('hidden-view');
@@ -249,7 +247,7 @@ export function setupAttendanceUIListeners() {
         }
     });
 
-    DOM.isSpecialCheck?.addEventListener('change', function() {
+    DOM.isSpecialCheck?.addEventListener('change', function () {
         if (this.checked) {
             DOM.noActivityCheck.checked = false;
             DOM.specialReasonInput.classList.remove('hidden-view');
@@ -354,8 +352,8 @@ export function getLastFridayAbsences(servantsCache, attendanceCache) {
     // Calculate target Friday: Shift to upcoming/current Friday starting on Thursday
     let lastFriday = new Date(today);
     let offset = 5 - today.getDay();
-    if (offset > 1) {
-        offset -= 7; // If today is Sun(0), Mon(1), Tue(2), Wed(3), we look back to last week's Friday
+    if (offset > 0) {
+        offset -= 7; // If today is Sun(0), Mon(1), Tue(2), Wed(3), Thu(4) we look back to last week's Friday
     }
     lastFriday.setDate(today.getDate() + offset);
 
@@ -365,10 +363,8 @@ export function getLastFridayAbsences(servantsCache, attendanceCache) {
     const dateStr = `${y}-${m}-${d}`;
 
     const dayData = attendanceCache[dateStr] || {};
-    const allAttendees = new Set();
-    ACTIVITIES.filter(a => a.key !== 'apology').forEach(act => {
-        (dayData[act.key]?.attendees || []).forEach(id => allAttendees.add(id));
-    });
+    // Only track attendance based on the "الخدمة" (service) activity
+    const allAttendees = new Set(dayData['service']?.attendees || []);
     const globalExcusedSet = new Set(dayData['apology']?.attendees || []);
 
     const absent = servantsCache.filter(s => {
@@ -400,7 +396,7 @@ export function getLastFridayAbsences(servantsCache, attendanceCache) {
 
         const isExcused = sExcusedSet.has(s.id);
         let consecutiveAbsences = 1;
-        
+
         if (!isExcused) {
             // Check previous 3 weeks back
             for (let i = 1; i <= 3; i++) {
@@ -410,27 +406,25 @@ export function getLastFridayAbsences(servantsCache, attendanceCache) {
                 const pm = String(pastDate.getMonth() + 1).padStart(2, '0');
                 const pd = String(pastDate.getDate()).padStart(2, '0');
                 const pDateStr = `${py}-${pm}-${pd}`;
-                
+
                 let pDayData = attendanceCache[pDateStr] || {};
                 if (AppState.isGeneralSecretaryMode && s.serviceName) {
                     const pEntry = AppState.allAttendanceCache.find(x => x.date === pDateStr && x.serviceName === s.serviceName);
                     if (pEntry) pDayData = pEntry;
                     else pDayData = {}; // Must reset if empty for this service!
                 }
-                
+
                 let anyAttendanceThatWeek = false;
                 let servantAttendedThatWeek = false;
                 let servantExcusedThatWeek = (pDayData['apology']?.attendees || []).includes(s.id);
-                
-                ACTIVITIES.filter(a => a.key !== 'apology').forEach(act => {
-                    if (pDayData[act.key] && pDayData[act.key].note == null) {
-                        anyAttendanceThatWeek = true;
-                        if ((pDayData[act.key].attendees || []).includes(s.id)) {
-                            servantAttendedThatWeek = true;
-                        }
+
+                if (pDayData['service'] && pDayData['service'].note == null && !pDayData['service'].isSpecial) {
+                    anyAttendanceThatWeek = true;
+                    if ((pDayData['service'].attendees || []).includes(s.id)) {
+                        servantAttendedThatWeek = true;
                     }
-                });
-                
+                }
+
                 if (!anyAttendanceThatWeek) continue; // Skip unrecorded weeks
                 if (!servantAttendedThatWeek && !servantExcusedThatWeek) {
                     consecutiveAbsences++;
@@ -439,7 +433,7 @@ export function getLastFridayAbsences(servantsCache, attendanceCache) {
                 }
             }
         }
-        
+
         return { ...s, isExcused, consecutiveAbsences };
     });
 
@@ -472,15 +466,15 @@ export function getAttendanceChartData(servantsCache, attendanceCache, days = 30
         const labelName = a.key === 'apology' ? 'معتذر' : a.name;
         labels.push(labelName);
         backgroundColors.push(a.color || '#94a3b8');
-        
+
         let totalSessions = 0;
         let totalAttended = 0;
-        
+
         Object.entries(attendanceCache).forEach(([date, dayData]) => {
             if (date >= startStr) {
                 // Determine if this day was active (any non-cancelled non-apology activity exists)
                 const isDayActive = ACTIVITIES.some(act => act.key !== 'apology' && dayData[act.key] && !dayData[act.key].isSpecial);
-                
+
                 if (isDayActive) {
                     totalSessions++;
                     if (dayData[a.key]) {
@@ -495,8 +489,8 @@ export function getAttendanceChartData(servantsCache, attendanceCache, days = 30
         data.push(percent);
     });
 
-    return { 
-        labels, 
+    return {
+        labels,
         datasets: [{
             label: 'متوسط الحضور (%)',
             data,
