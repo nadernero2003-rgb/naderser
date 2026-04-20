@@ -26,11 +26,8 @@ export const SERVICES = [
         name: "الامين العام",
         icon: "fa-user-shield",
         color: "blue",
-        isGroup: true,
-        children: [
-            { name: "الامين العام", icon: "fa-user-shield", color: "blue", isGeneralSecretary: true, description: "الدخول للوحة المعلومات الشاملة" },
-            { name: "خدمة ابتدائي", icon: "fa-church", color: "orange", isUnderConstruction: false, description: "نظام إدارة خدمة ابتدائي الشامل" }
-        ]
+        isGeneralSecretary: true,
+        description: "الدخول للوحة المعلومات الشاملة"
     }
 ];
 

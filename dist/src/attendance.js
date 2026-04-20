@@ -9,6 +9,7 @@ import {
 } from './firebase.js';
 import { DOM, showMessage, showLoading, openModal, closeModal, formatDateAr } from './ui.js';
 import { ACTIVITIES, ACTIVITY_MAP, MONTHS_AR } from './config.js';
+import { saveOfflineAttendance, syncPendingRecords, isOnline, initOfflineIndicator } from './offlineSync.js';
 
 // ─── Load Attendance for a Year ───────────────────────────────────
 export async function loadAttendanceForYear(year) {
@@ -323,8 +324,29 @@ export async function saveActivityAttendance() {
         }, 50);
 
     } catch (e) {
-        console.error(e);
-        showMessage('فشل حفظ الحضور.', true);
+        console.error('Firebase save failed, trying offline...', e);
+        if (!isOnline()) {
+            // Save offline
+            const offlineData = {
+                serviceName: AppState.currentServiceName,
+                dateStr: selectedFriday,
+                activityKey: currentActivity,
+                dayData: dayData
+            };
+            const saved = await saveOfflineAttendance(offlineData);
+            if (saved) {
+                AppState.attendanceYearCache[selectedFriday] = dayData;
+                showMessage('📴 تم الحفظ محلياً — سيتم المزامنة عند عودة الاتصال');
+                renderActivityButtons(selectedFriday);
+                const year2 = Number(selectedFriday.split('-')[0]);
+                const month2 = Number(selectedFriday.split('-')[1]) - 1;
+                populateFridaysGrid(year2, month2);
+            } else {
+                showMessage('فشل الحفظ المحلي أيضاً!', true);
+            }
+        } else {
+            showMessage('فشل حفظ الحضور.', true);
+        }
     } finally {
         saveBtn.disabled = false;
         saveBtn.innerHTML = '<i class="fas fa-save ml-2"></i> حفظ الحضور';

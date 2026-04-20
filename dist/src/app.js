@@ -41,6 +41,8 @@ import {
     renderServiceEvents, openCreateEventModal, openEventAttendanceModal
 } from './dashboard.js';
 import { generateBirthdayGreeting, renderMarkdown, copyText, shareWhatsapp } from './ai.js';
+import { renderDailyContent } from './dailyContent.js';
+import { initOfflineIndicator, syncPendingRecords } from './offlineSync.js';
 
 // Make deleteServant available globally for event delegation
 window.__servants = { deleteServant };
@@ -113,13 +115,78 @@ async function bootstrap() {
     initDOM();
     initCloseButtons();
     renderServicesGrid();    // Show UI immediately
+    renderDailyContent();    // Load daily verse + synaxarium
     bindGlobalEvents();
     showLoading(false);      // Hide loading ASAP so user sees cards
     setupAttendanceUIListeners();
     await initFirebase();    // Connect to DB in background
+    
+    // Load Custom Background & Settings
+    try {
+        const { getDoc, doc } = await import('./firebase.js');
+        const bgSnap = await getDoc(doc(AppState.db, 'system_settings', 'main'));
+        if (bgSnap.exists()) {
+            const data = bgSnap.data();
+            if (data.backgroundImage) {
+                const bgStr = data.backgroundImage;
+                const bgEl = document.getElementById('loginOrServicesBg');
+                if (bgEl) {
+                    const mode = data.bgSizeMode || 'cover';
+                    bgEl.style.backgroundImage = `url(${bgStr})`;
+                    bgEl.style.backgroundSize = mode;
+                    bgEl.style.backgroundPosition = 'center';
+                    bgEl.style.backgroundRepeat = 'no-repeat';
+                    
+                    const select = document.getElementById('bgSizeMode');
+                    if (select) select.value = mode;
+                }
+            }
+            if (data.cardOpacity !== undefined) {
+                document.documentElement.style.setProperty('--card-opacity', data.cardOpacity);
+                const slider = document.getElementById('cardOpacitySlider');
+                const display = document.getElementById('opacityValueDisplay');
+                if (slider) slider.value = Math.round(data.cardOpacity * 100);
+                if (display) display.textContent = Math.round(data.cardOpacity * 100) + '%';
+            } else {
+                document.documentElement.style.setProperty('--card-opacity', '0.90');
+            }
+            if (data.cardBlur !== undefined) {
+                document.documentElement.style.setProperty('--card-blur', data.cardBlur + 'px');
+                const slider = document.getElementById('cardBlurSlider');
+                const display = document.getElementById('blurValueDisplay');
+                if (slider) slider.value = data.cardBlur;
+                if (display) display.textContent = data.cardBlur + 'px';
+            } else {
+                document.documentElement.style.setProperty('--card-blur', '10px');
+            }
+        } else {
+            document.documentElement.style.setProperty('--card-opacity', '0.90');
+            document.documentElement.style.setProperty('--card-blur', '10px');
+        }
+    } catch(e) { console.warn("Failed to load custom background or opacity", e); }
+
     updateServiceCardBadges();
-    updateBirthdayBadges();  // Check for today's birthdays
+    await updateBirthdayBadges();  // Check for today's birthdays
+    // Re-check birthday badges after delay (ensures DOM is fully ready)
+    setTimeout(() => updateBirthdayBadges(), 3000);
     initPWA();               // Setup install logic
+    initOfflineIndicator();   // Show offline/online status
+    // Auto-sync when back online
+    window.addEventListener('app-online', async () => {
+        const { setDoc } = await import('./firebase.js');
+        const result = await syncPendingRecords(async (record) => {
+            const { doc } = await import('./firebase.js');
+            const docRef = doc(AppState.db, 'services', record.serviceName, 'attendance', record.dateStr);
+            await setDoc(docRef, record.dayData, { merge: true });
+        });
+        if (result.synced > 0) {
+            showMessage(`✅ تمت مزامنة ${result.synced} سجل حضور`);
+        }
+    });
+    // Re-check birthdays when user returns to the app
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) updateBirthdayBadges();
+    });
 }
 
 // ─── Service Selection Grid ────────────────────────────────────────
@@ -132,25 +199,25 @@ function renderServicesGrid() {
         const badgeId = `service-badge-${svc.name.replace(/\s+/g, '-')}`;
 
         return `
-        <div class="service-card group relative flex flex-col items-center justify-center p-5 md:p-6 rounded-2xl cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:scale-[1.03] active:scale-[0.98]"
+        <div class="service-card group relative flex flex-col items-center justify-center p-6 md:p-7 rounded-3xl cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:scale-[1.03] active:scale-[0.98]"
              data-service="${svc.name}"
-             style="background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(148, 163, 184, 0.12); box-shadow: 0 4px 24px -4px rgba(0,0,0,0.3);">
+             style="background: rgba(255, 255, 255, var(--card-opacity, 0.95)); backdrop-filter: blur(var(--card-blur, 10px)); -webkit-backdrop-filter: blur(var(--card-blur, 10px)); border: 1px solid ${c.icon}20; box-shadow: 0 4px 20px -4px ${c.icon}15, 0 1px 3px rgba(0,0,0,0.06);">
              
             <!-- Hover glow effect -->
-            <div class="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                 style="background: radial-gradient(circle at 50% 50%, ${c.icon}15, transparent 70%); box-shadow: 0 8px 40px -8px ${c.icon}30;"></div>
+            <div class="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                 style="box-shadow: 0 12px 40px -8px ${c.icon}30;"></div>
             
             <!-- Top accent line -->
-            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-[2px] rounded-full opacity-60 group-hover:w-20 group-hover:opacity-100 transition-all duration-500"
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-[3px] rounded-full group-hover:w-24 transition-all duration-500"
                  style="background: linear-gradient(90deg, transparent, ${c.icon}, transparent);"></div>
 
-            <div class="relative w-14 h-14 md:w-16 md:h-16 flex items-center justify-center rounded-2xl mb-3 transition-all duration-300 group-hover:shadow-lg"
-                 style="background: linear-gradient(135deg, ${c.icon}18, ${c.icon}08); border: 1px solid ${c.icon}30; box-shadow: 0 0 0 0 ${c.icon}00;">
-                <i class="fas ${svc.icon} text-xl md:text-2xl transition-transform duration-300 group-hover:scale-110" style="color: ${c.icon};"></i>
-                <span id="${badgeId}" class="hidden-view absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[20px] h-[20px] flex items-center justify-center shadow-lg border-2 border-slate-800 animate-pulse">0</span>
+            <div class="relative w-16 h-16 md:w-18 md:h-18 flex items-center justify-center rounded-2xl mb-3 transition-all duration-300 group-hover:scale-110"
+                 style="background: ${c.bg}; border: 1px solid ${c.border}40;">
+                <i class="fas ${svc.icon} text-2xl md:text-3xl" style="color: ${c.icon};"></i>
+                <span id="${badgeId}" class="hidden-view absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[20px] h-[20px] flex items-center justify-center shadow-lg border-2 border-white animate-pulse">0</span>
             </div>
             
-            <p class="relative font-bold text-xs md:text-sm text-center text-slate-200 group-hover:text-white transition-colors duration-300 leading-tight">
+            <p class="relative font-bold text-sm md:text-base text-center text-slate-700 group-hover:text-slate-900 transition-colors duration-300 leading-tight">
                 ${svc.name}
             </p>
         </div>`;
@@ -164,6 +231,127 @@ function renderServicesGrid() {
 
 // ─── Global Event Bindings ─────────────────────────────────────────
 function bindGlobalEvents() {
+
+    // ── Background Image Upload (GS Settings) ──────────────────────
+    document.getElementById('bgUploadInput')?.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const btn = e.target.closest('button');
+        const icon = btn.querySelector('.fa-upload');
+        if (icon) {
+            icon.classList.remove('fa-upload');
+            icon.classList.add('fa-spinner', 'fa-spin');
+        }
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            const img = new Image();
+            img.onload = async () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 1200;
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > MAX_WIDTH) {
+                    height = height * (MAX_WIDTH / width);
+                    width = MAX_WIDTH;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                const base64Str = canvas.toDataURL('image/webp', 0.6);
+
+                try {
+                    const { doc, setDoc } = await import('./firebase.js');
+                    const { AppState } = await import('./state.js');
+                    const settingsRef = doc(AppState.db, 'system_settings', 'main');
+                    await setDoc(settingsRef, { backgroundImage: base64Str }, { merge: true });
+                    
+                    const bgEl = document.getElementById('loginOrServicesBg');
+                    if (bgEl) {
+                        const mode = document.getElementById('bgSizeMode')?.value || 'cover';
+                        bgEl.style.backgroundImage = `url(${base64Str})`;
+                        bgEl.style.backgroundSize = mode;
+                        bgEl.style.backgroundPosition = 'center';
+                        bgEl.style.backgroundRepeat = 'no-repeat';
+                    }
+                    
+                    const { showMessage } = await import('./ui.js');
+                    showMessage('تم تطبيق الخلفية بنجاح!', false);
+                } catch (err) {
+                    console.error("BG Upload format error", err);
+                    const { showMessage } = await import('./ui.js');
+                    showMessage('فشل حفظ الخلفية - قد يكون حجم الصورة كبيراً جداً', true);
+                } finally {
+                    if (icon) {
+                        icon.classList.remove('fa-spinner', 'fa-spin');
+                        icon.classList.add('fa-upload');
+                    }
+                    e.target.value = ''; // Reset input
+                }
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // ── Background Size Mode Selector ──────────────────────────────
+    document.getElementById('bgSizeMode')?.addEventListener('change', async (e) => {
+        const mode = e.target.value;
+        const bgEl = document.getElementById('loginOrServicesBg');
+        if (bgEl) bgEl.style.backgroundSize = mode;
+        try {
+            const { doc, setDoc } = await import('./firebase.js');
+            const { AppState } = await import('./state.js');
+            const settingsRef = doc(AppState.db, 'system_settings', 'main');
+            await setDoc(settingsRef, { bgSizeMode: mode }, { merge: true });
+        } catch (err) { console.error("Size mode save error", err); }
+    });
+
+    // ── Card Opacity Slider (GS Settings) ──────────────────────────
+    const opacitySlider = document.getElementById('cardOpacitySlider');
+    const opacityDisplay = document.getElementById('opacityValueDisplay');
+    let opacityTimeout;
+    opacitySlider?.addEventListener('input', (e) => {
+        const val = e.target.value;
+        if (opacityDisplay) opacityDisplay.textContent = val + '%';
+        document.documentElement.style.setProperty('--card-opacity', val / 100);
+        
+        // Debounce firebase save
+        clearTimeout(opacityTimeout);
+        opacityTimeout = setTimeout(async () => {
+            try {
+                const { doc, setDoc } = await import('./firebase.js');
+                const { AppState } = await import('./state.js');
+                const settingsRef = doc(AppState.db, 'system_settings', 'main');
+                await setDoc(settingsRef, { cardOpacity: val / 100 }, { merge: true });
+            } catch (err) { console.error("Opacity save error", err); }
+        }, 1000);
+    });
+
+    // ── Card Blur Slider (GS Settings) ─────────────────────────────
+    const blurSlider = document.getElementById('cardBlurSlider');
+    const blurDisplay = document.getElementById('blurValueDisplay');
+    let blurTimeout;
+    blurSlider?.addEventListener('input', (e) => {
+        const val = e.target.value;
+        if (blurDisplay) blurDisplay.textContent = val + 'px';
+        document.documentElement.style.setProperty('--card-blur', val + 'px');
+        
+        // Debounce firebase save
+        clearTimeout(blurTimeout);
+        blurTimeout = setTimeout(async () => {
+            try {
+                const { doc, setDoc } = await import('./firebase.js');
+                const { AppState } = await import('./state.js');
+                const settingsRef = doc(AppState.db, 'system_settings', 'main');
+                await setDoc(settingsRef, { cardBlur: Number(val) }, { merge: true });
+            } catch (err) { console.error("Blur save error", err); }
+        }, 1000);
+    });
 
     // ── Auth / Navigation ──────────────────────────────────────────
     document.getElementById('passwordForm')?.addEventListener('submit', handlePasswordSubmit);
@@ -891,7 +1079,7 @@ async function updateBirthdayBadges() {
         const todayMonth = today.getMonth() + 1;
         const todayDay = today.getDate();
 
-        for (const service of SERVICES.filter(s => !s.isGroup)) {
+        const servicePromises = SERVICES.filter(s => !s.isGroup).map(async service => {
             try {
                 const col = collection(AppState.db, 'services', service.name, 'servants');
                 const snap = await getDocs(col);
@@ -910,15 +1098,18 @@ async function updateBirthdayBadges() {
                     const badgeId = `birthday-badge-${service.name.replace(/\s+/g, '-')}`;
                     let badge = document.getElementById(badgeId);
                     if (!badge) {
-                        // Create birthday badge element next to existing announcement badge
-                        const announcementBadge = document.getElementById(`service-badge-${service.name.replace(/\s+/g, '-')}`);
-                        if (announcementBadge && announcementBadge.parentElement) {
-                            const iconContainer = announcementBadge.parentElement;
-                            badge = document.createElement('span');
-                            badge.id = badgeId;
-                            badge.className = 'absolute -top-1.5 -left-1.5 bg-pink-500 text-white text-[10px] font-bold rounded-full min-w-[20px] h-[20px] flex items-center justify-center shadow-lg border-2 border-slate-800 animate-bounce';
-                            badge.title = '🎂 عيد ميلاد اليوم!';
-                            iconContainer.appendChild(badge);
+                        const card = document.querySelector(`.service-card[data-service="${service.name}"]`);
+                        if (card) {
+                            const iconContainer = card.querySelector('.relative.w-16') || card.querySelector('.relative');
+                            if (iconContainer) {
+                                badge = document.createElement('span');
+                                badge.id = badgeId;
+                                badge.className = 'absolute -top-2 -left-2 text-lg animate-bounce z-10';
+                                badge.style.cssText = 'filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));';
+                                badge.title = `🎂 ${birthdayCount} عيد ميلاد اليوم!`;
+                                iconContainer.style.position = 'relative';
+                                iconContainer.appendChild(badge);
+                            }
                         }
                     }
                     if (badge) {
@@ -926,8 +1117,12 @@ async function updateBirthdayBadges() {
                         badge.classList.remove('hidden-view');
                     }
                 }
-            } catch (e) { /* skip this service */ }
-        }
+            } catch (e) {
+                console.error(`Birthday fetch error for ${service.name}:`, e);
+            }
+        });
+        
+        await Promise.all(servicePromises);
     } catch (e) { console.error('Birthday badges error:', e); }
 }
 

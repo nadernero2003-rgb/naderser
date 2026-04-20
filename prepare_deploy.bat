@@ -12,7 +12,11 @@ mkdir %DIST_DIR%\styles
 echo Copying main files...
 if exist index.html copy index.html %DIST_DIR%\
 if exist favicon.png copy favicon.png %DIST_DIR%\
+if exist app-icon.png copy app-icon.png %DIST_DIR%\
+if exist manifest.json copy manifest.json %DIST_DIR%\
+if exist sw.js copy sw.js %DIST_DIR%\
 if exist _redirects copy _redirects %DIST_DIR%\
+if exist _headers copy _headers %DIST_DIR%\
 
 echo Copying source folders...
 xcopy src %DIST_DIR%\src /e /i /y

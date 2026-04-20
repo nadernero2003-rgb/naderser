@@ -55,6 +55,16 @@ export async function showDashboard() {
         DOM.loginOrServicesView?.classList.add('hidden-view');
         DOM.mainDashboard?.classList.remove('hidden-view');
 
+        // Ensure sidebar is closed on mobile when entering and force Safari layout recalculation
+        if (DOM.sidebar) {
+            DOM.sidebar.classList.remove('open');
+            DOM.sidebar.style.display = 'none'; // Force hide
+            setTimeout(() => {
+                DOM.sidebar.style.display = ''; // Restore after browser paints
+            }, 50);
+        }
+        DOM.sidebarOverlay?.classList.add('hidden');
+
         // Hide install banner inside service pages (only show on front page)
         document.getElementById('staticInstallBanner')?.classList.add('hidden');
 
@@ -84,11 +94,14 @@ export async function showDashboard() {
 export async function loadHomePage() {
     const adminKpiSection = document.getElementById('adminKpiSection');
     const totalServantsCard = document.getElementById('totalServantsCard');
+    const gsSettings = document.getElementById('generalSecretariatSettings');
 
     if (AppState.isGeneralSecretaryMode) {
         // Admin: show KPI section at top, hide redundant totalServantsCard
         if (adminKpiSection) adminKpiSection.classList.remove('hidden-view');
         if (totalServantsCard) totalServantsCard.classList.add('hidden-view');
+        if (gsSettings) gsSettings.classList.remove('hidden-view');
+
         DOM.serviceDashboardContainer?.classList.remove('hidden-view');
         DOM.adminDashboardContainer?.classList.remove('hidden-view');
         await loadAllServicesData();
@@ -116,6 +129,8 @@ export async function loadHomePage() {
     } else {
         if (adminKpiSection) adminKpiSection.classList.add('hidden-view');
         if (totalServantsCard) totalServantsCard.classList.remove('hidden-view');
+        if (gsSettings) gsSettings.classList.add('hidden-view');
+
         DOM.serviceDashboardContainer?.classList.remove('hidden-view');
         DOM.adminDashboardContainer?.classList.add('hidden-view');
         await loadAttendanceForYear(new Date().getFullYear());

@@ -416,7 +416,11 @@ export async function processExcelPreview() {
             natId: findCol(['قومي', 'بطاقة']),
             chapter: findCol(['فصل', 'مرحلة']),
             prevSvc: findCol(['سابقة', 'خدمة سابقة']),
-            joinDate: findCol(['التحاق', 'بداية'])
+            joinDate: findCol(['التحاق', 'بداية']),
+            qualification: findCol(['مؤهل', 'المؤهل']),
+            job: findCol(['وظيفة', 'عمل', 'مهنة']),
+            address: findCol(['عنوان', 'سكن']),
+            confessionFather: findCol(['اب الاعتراف', 'اعتراف', 'أب'])
         };
 
         const result = dataRows.map((r, idx) => {
@@ -430,6 +434,10 @@ export async function processExcelPreview() {
                 chapter: map.chapter !== -1 && r[map.chapter] ? String(r[map.chapter]).trim() : '',
                 currentService: map.prevSvc !== -1 && r[map.prevSvc] ? String(r[map.prevSvc]).trim() : '',
                 joinDate: map.joinDate !== -1 ? parseDob(r[map.joinDate]) : '',
+                qualification: map.qualification !== -1 && r[map.qualification] ? String(r[map.qualification]).trim() : '',
+                job: map.job !== -1 && r[map.job] ? String(r[map.job]).trim() : '',
+                address: map.address !== -1 && r[map.address] ? String(r[map.address]).trim() : '',
+                confessionFather: map.confessionFather !== -1 && r[map.confessionFather] ? String(r[map.confessionFather]).trim() : '',
                 isValid: true,
                 errors: []
             };
@@ -523,12 +531,13 @@ export async function commitExcelImport() {
 }
 
 export function exportServantsToExcel() {
-    const header = ['الاسم', 'الموبايل', 'تاريخ الميلاد', 'الرقم القومي', 'الفصل', 'الخدمة السابقة', 'تاريخ الالتحاق', 'الوظيفة', 'المؤهل'];
+    const header = ['الاسم', 'الموبايل', 'تاريخ الميلاد', 'الرقم القومي', 'الفصل', 'الخدمة السابقة', 'تاريخ الالتحاق', 'المؤهل', 'الوظيفة', 'العنوان', 'اب الاعتراف'];
     const list = AppState.servantsCache || [];
-    const rows = [header, ...list.map(s => [s.name, s.mobile, s.dob, s.nationalId, s.chapter, s.currentService, s.joinDate, s.job, s.qualification])];
+    const rows = [header, ...list.map(s => [s.name, s.mobile, s.dob, s.nationalId, s.chapter, s.currentService, s.joinDate, s.qualification, s.job, s.address, s.confessionFather])];
     const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(rows);
     XLSX.utils.book_append_sheet(wb, ws, 'الخدام');
-    XLSX.writeFile(wb, 'خدام.xlsx');
+    const serviceName = AppState.currentServiceName ? `_${AppState.currentServiceName}` : '';
+    XLSX.writeFile(wb, `خدام${serviceName}.xlsx`);
 }
 
 // ─── Birthdays ─────────────────────────────────────────────────────
@@ -941,12 +950,12 @@ export function downloadExcelTemplate() {
             ["قالب استيراد الخدام - نظام إدارة الخدمة"],
             ["ملاحظة: لا تقم بتعديل ترتيب الأعمدة. يتم بدء القراءة من السطر الخامس."],
             ["تنسيق التاريخ المطلوب: YYYY-MM-DD (مثال: 1990-05-15)"],
-            ["الاسم", "الموبايل", "تاريخ الميلاد", "الرقم القومي", "الفصل", "الخدمة السابقة", "تاريخ الالتحاق"]
+            ["الاسم", "الموبايل", "تاريخ الميلاد", "الرقم القومي", "الفصل", "الخدمة السابقة", "تاريخ الالتحاق", "المؤهل", "الوظيفة", "العنوان", "أب الاعتراف"]
         ];
         const ws = XLSX.utils.aoa_to_sheet(wsData);
 
         // Basic styling/column width
-        ws['!cols'] = [{ wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 20 }, { wch: 20 }];
+        ws['!cols'] = [{ wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 30 }, { wch: 20 }];
 
         XLSX.utils.book_append_sheet(wb, ws, "الخدام");
         XLSX.writeFile(wb, "قالب_استيراد_الخدام.xlsx");
