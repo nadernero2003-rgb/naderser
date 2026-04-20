@@ -518,6 +518,9 @@
                             <button id="exportServantsExcelBtn" class="btn btn-ghost text-sm">
                                 <i class="fas fa-download"></i> تصدير
                             </button>
+                            <button id="bulkDeleteServantsBtn" class="btn btn-danger text-sm hidden-view">
+                                <i class="fas fa-trash-alt"></i> حذف المحدد <span id="bulkDeleteCount" class="mr-1 bg-red-800 text-white px-2 py-0.5 rounded-full text-xs">0</span>
+                            </button>
                         </div>
                     </div>
 
@@ -1436,7 +1439,9 @@
                                 <th class="p-3 border-b dark:border-slate-700 font-black">الحالة</th>
                                 <th class="p-3 border-b dark:border-slate-700 font-black">الاسم</th>
                                 <th class="p-3 border-b dark:border-slate-700 font-black">الموبايل</th>
-                                <th class="p-3 border-b dark:border-slate-700 font-black">تاريخ الميلاد</th>
+                                <th class="p-3 border-b dark:border-slate-700 font-black">العنوان</th>
+                                <th class="p-3 border-b dark:border-slate-700 font-black">أب الاعتراف</th>
+                                <th class="p-3 border-b dark:border-slate-700 font-black">الوظيفة</th>
                                 <th class="p-3 border-b dark:border-slate-700 font-black">الفصل</th>
                             </tr>
                         </thead>
