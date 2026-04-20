@@ -112,81 +112,89 @@ window.generateAndShowAIGreeting = async function (name) {
 
 // ─── Bootstrap ────────────────────────────────────────────────────
 async function bootstrap() {
-    initDOM();
-    initCloseButtons();
-    renderServicesGrid();    // Show UI immediately
-    renderDailyContent();    // Load daily verse + synaxarium
-    bindGlobalEvents();
-    showLoading(false);      // Hide loading ASAP so user sees cards
-    setupAttendanceUIListeners();
-    await initFirebase();    // Connect to DB in background
-    
-    // Load Custom Background & Settings
     try {
-        const { getDoc, doc } = await import('./firebase.js');
-        const bgSnap = await getDoc(doc(AppState.db, 'system_settings', 'main'));
-        if (bgSnap.exists()) {
-            const data = bgSnap.data();
-            if (data.backgroundImage) {
-                const bgStr = data.backgroundImage;
-                const bgEl = document.getElementById('loginOrServicesBg');
-                if (bgEl) {
-                    const mode = data.bgSizeMode || 'cover';
-                    bgEl.style.backgroundImage = `url(${bgStr})`;
-                    bgEl.style.backgroundSize = mode;
-                    bgEl.style.backgroundPosition = 'center';
-                    bgEl.style.backgroundRepeat = 'no-repeat';
-                    
-                    const select = document.getElementById('bgSizeMode');
-                    if (select) select.value = mode;
+        initDOM();
+        initCloseButtons();
+        renderServicesGrid();    // Show UI immediately
+        renderDailyContent();    // Load daily verse + synaxarium
+        bindGlobalEvents();
+        setupAttendanceUIListeners();
+        await initFirebase();    // Connect to DB in background
+        
+        // Load Custom Background & Settings
+        try {
+            const { getDoc, doc } = await import('./firebase.js');
+            const bgSnap = await getDoc(doc(AppState.db, 'system_settings', 'main'));
+            if (bgSnap.exists()) {
+                const data = bgSnap.data();
+                if (data.backgroundImage) {
+                    const bgStr = data.backgroundImage;
+                    const bgEl = document.getElementById('loginOrServicesBg');
+                    if (bgEl) {
+                        const mode = data.bgSizeMode || 'cover';
+                        bgEl.style.backgroundImage = `url(${bgStr})`;
+                        bgEl.style.backgroundSize = mode;
+                        bgEl.style.backgroundPosition = 'center';
+                        bgEl.style.backgroundRepeat = 'no-repeat';
+                        
+                        const select = document.getElementById('bgSizeMode');
+                        if (select) select.value = mode;
+                    }
                 }
-            }
-            if (data.cardOpacity !== undefined) {
-                document.documentElement.style.setProperty('--card-opacity', data.cardOpacity);
-                const slider = document.getElementById('cardOpacitySlider');
-                const display = document.getElementById('opacityValueDisplay');
-                if (slider) slider.value = Math.round(data.cardOpacity * 100);
-                if (display) display.textContent = Math.round(data.cardOpacity * 100) + '%';
+                if (data.cardOpacity !== undefined) {
+                    document.documentElement.style.setProperty('--card-opacity', data.cardOpacity);
+                    const slider = document.getElementById('cardOpacitySlider');
+                    const display = document.getElementById('opacityValueDisplay');
+                    if (slider) slider.value = Math.round(data.cardOpacity * 100);
+                    if (display) display.textContent = Math.round(data.cardOpacity * 100) + '%';
+                } else {
+                    document.documentElement.style.setProperty('--card-opacity', '0.90');
+                }
+                if (data.cardBlur !== undefined) {
+                    document.documentElement.style.setProperty('--card-blur', data.cardBlur + 'px');
+                    const slider = document.getElementById('cardBlurSlider');
+                    const display = document.getElementById('blurValueDisplay');
+                    if (slider) slider.value = data.cardBlur;
+                    if (display) display.textContent = data.cardBlur + 'px';
+                } else {
+                    document.documentElement.style.setProperty('--card-blur', '10px');
+                }
             } else {
                 document.documentElement.style.setProperty('--card-opacity', '0.90');
-            }
-            if (data.cardBlur !== undefined) {
-                document.documentElement.style.setProperty('--card-blur', data.cardBlur + 'px');
-                const slider = document.getElementById('cardBlurSlider');
-                const display = document.getElementById('blurValueDisplay');
-                if (slider) slider.value = data.cardBlur;
-                if (display) display.textContent = data.cardBlur + 'px';
-            } else {
                 document.documentElement.style.setProperty('--card-blur', '10px');
             }
-        } else {
-            document.documentElement.style.setProperty('--card-opacity', '0.90');
-            document.documentElement.style.setProperty('--card-blur', '10px');
-        }
-    } catch(e) { console.warn("Failed to load custom background or opacity", e); }
+        } catch(e) { console.warn("Failed to load custom background or opacity", e); }
 
-    updateServiceCardBadges();
-    await updateBirthdayBadges();  // Check for today's birthdays
-    // Re-check birthday badges after delay (ensures DOM is fully ready)
-    setTimeout(() => updateBirthdayBadges(), 3000);
-    initPWA();               // Setup install logic
-    initOfflineIndicator();   // Show offline/online status
-    // Auto-sync when back online
-    window.addEventListener('app-online', async () => {
-        const { setDoc } = await import('./firebase.js');
-        const result = await syncPendingRecords(async (record) => {
-            const { doc } = await import('./firebase.js');
-            const docRef = doc(AppState.db, 'services', record.serviceName, 'attendance', record.dateStr);
-            await setDoc(docRef, record.dayData, { merge: true });
+        updateServiceCardBadges();
+        await updateBirthdayBadges();  // Check for today's birthdays
+        // Re-check birthday badges after delay (ensures DOM is fully ready)
+        setTimeout(() => updateBirthdayBadges(), 3000);
+        initPWA();               // Setup install logic
+        initOfflineIndicator();   // Show offline/online status
+        
+        // Auto-sync when back online
+        window.addEventListener('app-online', async () => {
+            const { setDoc } = await import('./firebase.js');
+            const result = await syncPendingRecords(async (record) => {
+                const { doc } = await import('./firebase.js');
+                const docRef = doc(AppState.db, 'services', record.serviceName, 'attendance', record.dateStr);
+                await setDoc(docRef, record.dayData, { merge: true });
+            });
+            if (result.synced > 0) {
+                showMessage(`✅ تمت مزامنة ${result.synced} سجل حضور`);
+            }
         });
-        if (result.synced > 0) {
-            showMessage(`✅ تمت مزامنة ${result.synced} سجل حضور`);
-        }
-    });
-    // Re-check birthdays when user returns to the app
-    document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) updateBirthdayBadges();
-    });
+
+        // Re-check birthdays when user returns to the app
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) updateBirthdayBadges();
+        });
+
+    } catch (error) {
+        console.error("Critical Bootstrap Error:", error);
+    } finally {
+        showLoading(false);      // Hide loading overlay NO MATTER WHAT
+    }
 }
 
 // ─── Service Selection Grid ────────────────────────────────────────
@@ -410,6 +418,9 @@ function bindGlobalEvents() {
     DOM.addManualBtn?.addEventListener('click', openAddModal);
     DOM.importExcelBtn?.addEventListener('click', () => openModal(DOM.importModal));
     DOM.exportServantsExcelBtn?.addEventListener('click', exportServantsToExcel);
+    DOM.bulkDeleteServantsBtn?.addEventListener('click', () => {
+        import('./servants.js').then(m => m.bulkDeleteServants());
+    });
     DOM.manualEntryForm?.addEventListener('submit', handleServantFormSubmit);
     DOM.servantImageFile?.addEventListener('change', handleImageSelect);
 

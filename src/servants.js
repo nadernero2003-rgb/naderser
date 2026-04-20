@@ -1029,12 +1029,3 @@ window.openEditModal = openEditModal;
 window.deleteServant = deleteServant;
 window.downloadExcelTemplate = downloadExcelTemplate;
 window.bulkDeleteServants = bulkDeleteServants;
-
-// Initialize event listeners
-document.addEventListener('DOMContentLoaded', () => {
-    DOM.bulkDeleteServantsBtn?.addEventListener('click', bulkDeleteServants);
-});
-// Also try to bind immediately just in case
-if (DOM.bulkDeleteServantsBtn) {
-    DOM.bulkDeleteServantsBtn.onclick = bulkDeleteServants;
-}
