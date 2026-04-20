@@ -283,19 +283,23 @@
 
                     <!-- ── Service Dashboard (10 services) ── -->
                     <div id="serviceDashboardContainer">
-                        <!-- Top Cards -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-6">
+                        <!-- Top Stat Card -->
+                        <div class="flex justify-center mb-6">
                             <!-- Total Servants (Hidden in Admin mode) -->
                             <div id="totalServantsCard"
-                                class="card bg-white dark:bg-slate-800 dark:border-slate-700 p-5 rounded-xl shadow-md border border-slate-100 flex items-center justify-between cursor-pointer hover:shadow-lg transition-all group">
-                                <div class="flex flex-col items-start">
+                                class="w-[95%] md:w-11/12 lg:w-3/4 card bg-white dark:bg-slate-800 dark:border-slate-700 p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-all group">
+                                <div class="text-right">
                                     <p class="text-slate-500 dark:text-slate-400 text-sm font-bold mb-1">إجمالي الخدام</p>
-                                    <p id="totalServantsStat" class="text-3xl font-black text-slate-800 dark:text-white">0</p>
+                                    <p id="totalServantsStat" class="text-3xl font-black text-teal-600 dark:text-teal-400">0</p>
                                 </div>
-                                <div class="w-12 h-12 rounded-xl bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <i class="fas fa-users text-xl text-teal-600 dark:text-teal-400"></i>
+                                <div class="w-16 h-16 rounded-full bg-[#f0fbf9] dark:bg-teal-900/40 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                    <i class="fas fa-users text-3xl text-[#0fa997] dark:text-teal-400"></i>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Secondary Cards -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
                             <!-- Birthdays -->
                             <div
