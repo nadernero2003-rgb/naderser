@@ -289,10 +289,13 @@
                             <div id="totalServantsCard"
                                 class="w-[95%] md:w-11/12 lg:w-3/4 card bg-white dark:bg-slate-800 dark:border-slate-700 p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-all group">
                                 <div class="text-right">
-                                    <p class="text-slate-500 dark:text-slate-400 text-sm font-bold mb-1">إجمالي الخدام</p>
-                                    <p id="totalServantsStat" class="text-3xl font-black text-teal-600 dark:text-teal-400">0</p>
+                                    <p class="text-slate-500 dark:text-slate-400 text-sm font-bold mb-1">إجمالي الخدام
+                                    </p>
+                                    <p id="totalServantsStat"
+                                        class="text-3xl font-black text-teal-600 dark:text-teal-400">0</p>
                                 </div>
-                                <div class="w-16 h-16 rounded-full bg-[#f0fbf9] dark:bg-teal-900/40 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                <div
+                                    class="w-16 h-16 rounded-full bg-[#f0fbf9] dark:bg-teal-900/40 flex items-center justify-center group-hover:scale-105 transition-transform">
                                     <i class="fas fa-users text-3xl text-[#0fa997] dark:text-teal-400"></i>
                                 </div>
                             </div>
@@ -519,8 +522,13 @@
                                 <i class="fas fa-download"></i> تصدير
                             </button>
                             <button id="bulkDeleteServantsBtn" class="btn btn-danger text-sm hidden-view">
-                                <i class="fas fa-trash-alt"></i> حذف المحدد <span id="bulkDeleteCount" class="mr-1 bg-red-800 text-white px-2 py-0.5 rounded-full text-xs">0</span>
+                                <i class="fas fa-trash-alt"></i> حذف المحدد <span id="bulkDeleteCount"
+                                    class="mr-1 bg-red-800 text-white px-2 py-0.5 rounded-full text-xs">0</span>
                             </button>
+                            <label class="flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-xl cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-all select-none border border-slate-200 dark:border-slate-700">
+                                <input type="checkbox" id="globalSelectAllServants" class="w-4 h-4 rounded border-slate-300">
+                                <span class="text-xs font-bold text-slate-600 dark:text-slate-400">تحديد الكل</span>
+                            </label>
                         </div>
                     </div>
 

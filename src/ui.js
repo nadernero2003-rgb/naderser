@@ -22,7 +22,7 @@ export function initDOM() {
         'userManagementLink',
         // Servants Page
         'servantsTableBody', 'serviceColumnHeader', 'serviceFilterGroup', 'servantServiceFilter', 'birthdayAlertsContainer', 'servantsViewToggle',
-        'searchInput', 'addManualBtn', 'importExcelBtn', 'exportServantsExcelBtn', 'bulkDeleteServantsBtn', 'bulkDeleteCount',
+        'searchInput', 'addManualBtn', 'importExcelBtn', 'exportServantsExcelBtn', 'bulkDeleteServantsBtn', 'bulkDeleteCount', 'globalSelectAllServants',
         'manualEntryModal', 'manualEntryModalTitle', 'manualEntryForm',
         'servantId', 'servantName', 'servantMobile', 'servantDob', 'servantNationalId',
         'servantChapter', 'servantCurrentService', 'servantJoinDate', 'servantJob', 'servantAddress', 'servantQualification',

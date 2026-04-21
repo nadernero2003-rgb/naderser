@@ -137,11 +137,11 @@ export async function renderServantsTable(source = null) {
     }
 
     if (AppState.servantsViewMode === 'table') {
+        const isAdmin = AppState.isGeneralSecretaryMode;
         tbody.className = "w-full overflow-x-auto bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 block";
         tbody.innerHTML = '<table class="w-full text-right border-collapse">' +
             '<thead>' +
             '<tr class="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">' +
-            '<th class="p-4 text-center w-10"><input type="checkbox" id="selectAllServants" class="w-4 h-4 rounded border-slate-300"></th>' +
             '<th class="p-4 text-center font-black">#</th>' +
             '<th class="p-4 text-center font-black w-16">الصورة</th>' +
             '<th class="p-4 text-right font-black">الخادم</th>' +
@@ -158,7 +158,7 @@ export async function renderServantsTable(source = null) {
                     ? '<img src="' + getSafeSrc(imgUrl) + '" class="w-10 h-10 rounded-full object-cover border border-slate-200 mx-auto">'
                     : '<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-400 text-xs mx-auto"><i class="fas fa-user"></i></div>';
 
-                const svcConfig = SERVICES.find(sv => sv.name === s.serviceName);
+                const svcConfig = (SERVICES || []).find(sv => sv.name === s.serviceName);
                 const svcBadge = isAdmin && s.serviceName
                     ? '<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border" style="color:' + (svcConfig?.icon || '#0d9488') + ';border-color:' + (svcConfig?.border || svcConfig?.icon || '#0d9488') + '20;background:' + (svcConfig?.border || svcConfig?.icon || '#0d9488') + '15">' + s.serviceName + '</span>'
                     : '';
@@ -171,11 +171,13 @@ export async function renderServantsTable(source = null) {
                         '</div></td>');
 
                 return '<tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b dark:border-slate-700 last:border-0">' +
-                    '<td class="p-4 text-center"><input type="checkbox" class="servant-row-checkbox w-4 h-4 rounded border-slate-300" data-id="' + s.id + '"></td>' +
                     '<td class="p-4 text-center font-bold text-slate-400 text-xs">' + (i + 1) + '</td>' +
                     '<td class="p-4 flex justify-center">' + imgHtml + '</td>' +
                     '<td class="p-4 text-right font-bold">' +
+                    '<div class="flex items-center gap-2">' +
+                    '<input type="checkbox" class="servant-row-checkbox w-4 h-4 rounded border-slate-300" data-id="' + s.id + '">' +
                     '<a href="#" onclick="event.preventDefault(); showServantProfile(\'' + s.id + '\', \'' + (s.serviceName || AppState.currentServiceName) + '\')" class="text-teal-600 dark:text-teal-400 hover:underline servant-profile-link">' + val(s.name) + '</a>' +
+                    '</div>' +
                     '</td>' +
                     (isAdmin ? '<td class="p-4 text-center">' + svcBadge + '</td>' : '') +
                     '<td class="p-4 text-center font-bold text-slate-600 dark:text-slate-300 text-sm">' + val(s.chapter) + '</td>' +
@@ -184,16 +186,6 @@ export async function renderServantsTable(source = null) {
                     '</tr>';
             }).join('') + '</tbody>' +
             '</table>';
-
-        // Add Select All Event
-        document.getElementById('selectAllServants')?.addEventListener('change', e => {
-            const checked = e.target.checked;
-            document.querySelectorAll('.servant-row-checkbox').forEach(cb => cb.checked = checked);
-            updateBulkDeleteButton();
-        });
-        document.querySelectorAll('.servant-row-checkbox').forEach(cb => {
-            cb.addEventListener('change', updateBulkDeleteButton);
-        });
     } else {
         // Grid View
         tbody.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20";
@@ -233,20 +225,41 @@ export async function renderServantsTable(source = null) {
                 ) +
                 '</div>';
         }).join('');
-
-        document.querySelectorAll('.servant-row-checkbox').forEach(cb => {
-            cb.addEventListener('change', updateBulkDeleteButton);
-        });
     }
+
+    // Re-bind listeners for checkboxes and update button
+    document.querySelectorAll('.servant-row-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateBulkDeleteButton);
+    });
+
+    // Toggle button icon sync
+    const toggleBtn = DOM.servantsViewToggle;
+    if (toggleBtn) {
+        const icon = toggleBtn.querySelector('i');
+        if (icon) {
+            icon.className = AppState.servantsViewMode === 'table' ? 'fas fa-th-large' : 'fas fa-list';
+        }
+    }
+
+    // Uncheck global selector if view refreshed and update button
+    if (DOM.globalSelectAllServants) DOM.globalSelectAllServants.checked = false;
+    updateBulkDeleteButton();
 }
 
-function updateBulkDeleteButton() {
+export function updateBulkDeleteButton() {
     const checked = document.querySelectorAll('.servant-row-checkbox:checked');
+    const totalCount = document.querySelectorAll('.servant-row-checkbox').length;
+
     if (checked.length > 0) {
         DOM.bulkDeleteServantsBtn?.classList.remove('hidden-view');
         if (DOM.bulkDeleteCount) DOM.bulkDeleteCount.textContent = checked.length;
     } else {
         DOM.bulkDeleteServantsBtn?.classList.add('hidden-view');
+    }
+
+    // Sync global checkbox
+    if (DOM.globalSelectAllServants) {
+        DOM.globalSelectAllServants.checked = totalCount > 0 && checked.length === totalCount;
     }
 }
 
@@ -275,8 +288,6 @@ export async function bulkDeleteServants() {
             showLoading(false);
         }
     });
-}
-    }
 }
 
 // ─── CRUD Operations ───────────────────────────────────────────────
@@ -556,34 +567,46 @@ function renderImportPreview() {
     }).join('');
 }
 
+let isCommittingImport = false;
 export async function commitExcelImport() {
-    const validData = AppState.pendingImport.filter(i => i.isValid);
+    if (isCommittingImport) return;
+
+    const validData = [...AppState.pendingImport.filter(i => i.isValid)];
     if (!validData.length) {
         showMessage('لا توجد بيانات صالحة لحفظها.', true);
         return;
     }
 
+    isCommittingImport = true;
     showLoading(true);
     try {
-        const batch = validData.map(item => {
-            const { isValid, errors, ...cleanData } = item;
-            return addDoc(getServiceCol('servants'), cleanData);
-        });
+        const batchSize = 10; // Process in small batches to be safe
+        for (let i = 0; i < validData.length; i += batchSize) {
+            const chunk = validData.slice(i, i + batchSize);
+            const promises = chunk.map(item => {
+                const { isValid, errors, ...cleanData } = item;
+                return addDoc(getServiceCol('servants'), cleanData);
+            });
+            await Promise.all(promises);
+        }
 
-        await Promise.all(batch);
         showMessage(`تم استيراد ${validData.length} خادم بنجاح ✓`);
+
+        // Clear state BEFORE closing to avoid race conditions
+        AppState.pendingImport = [];
+
         closeModal(document.getElementById('importModal'));
 
         // Reset Modal UI for next time
         document.getElementById('importStep1').classList.remove('hidden-view');
         document.getElementById('importStep2').classList.add('hidden-view');
         document.getElementById('excelFile').value = '';
-        AppState.pendingImport = [];
 
     } catch (e) {
         console.error(e);
         showMessage('حدث خطأ أثناء الحفظ في قاعدة البيانات.', true);
     } finally {
+        isCommittingImport = false;
         showLoading(false);
     }
 }
