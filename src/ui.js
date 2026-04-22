@@ -204,7 +204,7 @@ export function switchPage(pageId) {
 
     // Close sidebar on mobile
     if (window.innerWidth < 768) {
-        DOM.sidebar?.classList.add('translate-x-full');
+        DOM.sidebar?.classList.remove('open');
         DOM.sidebarOverlay?.classList.add('hidden');
     }
 

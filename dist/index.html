@@ -252,8 +252,8 @@
         <main id="mainContent">
             <!-- Mobile Header -->
             <header id="mobileHeader">
-                <button id="hamburgerBtn" class="text-slate-600 dark:text-slate-300 p-2">
-                    <i class="fas fa-bars text-lg"></i>
+                <button id="hamburgerBtn" class="text-slate-600 dark:text-slate-300 p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+                    <i class="fas fa-bars text-xl"></i>
                 </button>
                 <span id="mobilePageTitle" class="font-bold text-slate-700 dark:text-slate-200">الرئيسية</span>
                 <div class="w-8"></div>
@@ -283,21 +283,26 @@
 
                     <!-- ── Service Dashboard (10 services) ── -->
                     <div id="serviceDashboardContainer">
-                        <!-- Top Cards -->
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <!-- Top Stat Card -->
+                        <div class="flex justify-center mb-6">
                             <!-- Total Servants (Hidden in Admin mode) -->
                             <div id="totalServantsCard"
-                                class="lg:col-span-2 card dark:bg-slate-800 dark:border-slate-700 p-6 rounded-xl shadow-lg flex items-center justify-between cursor-pointer transition-transform hover:scale-105">
-                                <div>
+                                class="w-[95%] md:w-11/12 lg:w-3/4 card bg-white dark:bg-slate-800 dark:border-slate-700 p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-all group">
+                                <div class="text-right">
                                     <p class="text-slate-500 dark:text-slate-400 text-sm font-bold mb-1">إجمالي الخدام
                                     </p>
                                     <p id="totalServantsStat"
-                                        class="text-4xl font-black text-teal-600 dark:text-teal-400">0</p>
+                                        class="text-3xl font-black text-teal-600 dark:text-teal-400">0</p>
                                 </div>
-                                <div class="bg-teal-50 dark:bg-teal-900/30 p-4 rounded-full">
-                                    <i class="fas fa-users text-4xl text-teal-500"></i>
+                                <div
+                                    class="w-16 h-16 rounded-full bg-[#f0fbf9] dark:bg-teal-900/40 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                    <i class="fas fa-users text-3xl text-[#0fa997] dark:text-teal-400"></i>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Secondary Cards -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
                             <!-- Birthdays -->
                             <div
@@ -516,6 +521,14 @@
                             <button id="exportServantsExcelBtn" class="btn btn-ghost text-sm">
                                 <i class="fas fa-download"></i> تصدير
                             </button>
+                            <button id="bulkDeleteServantsBtn" class="btn btn-danger text-sm hidden-view">
+                                <i class="fas fa-trash-alt"></i> حذف المحدد <span id="bulkDeleteCount"
+                                    class="mr-1 bg-red-800 text-white px-2 py-0.5 rounded-full text-xs">0</span>
+                            </button>
+                            <label class="flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-xl cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-all select-none border border-slate-200 dark:border-slate-700">
+                                <input type="checkbox" id="globalSelectAllServants" class="w-4 h-4 rounded border-slate-300">
+                                <span class="text-xs font-bold text-slate-600 dark:text-slate-400">تحديد الكل</span>
+                            </label>
                         </div>
                     </div>
 
@@ -1434,7 +1447,9 @@
                                 <th class="p-3 border-b dark:border-slate-700 font-black">الحالة</th>
                                 <th class="p-3 border-b dark:border-slate-700 font-black">الاسم</th>
                                 <th class="p-3 border-b dark:border-slate-700 font-black">الموبايل</th>
-                                <th class="p-3 border-b dark:border-slate-700 font-black">تاريخ الميلاد</th>
+                                <th class="p-3 border-b dark:border-slate-700 font-black">العنوان</th>
+                                <th class="p-3 border-b dark:border-slate-700 font-black">أب الاعتراف</th>
+                                <th class="p-3 border-b dark:border-slate-700 font-black">الوظيفة</th>
                                 <th class="p-3 border-b dark:border-slate-700 font-black">الفصل</th>
                             </tr>
                         </thead>

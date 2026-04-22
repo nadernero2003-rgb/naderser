@@ -55,13 +55,9 @@ export async function showDashboard() {
         DOM.loginOrServicesView?.classList.add('hidden-view');
         DOM.mainDashboard?.classList.remove('hidden-view');
 
-        // Ensure sidebar is closed on mobile when entering and force Safari layout recalculation
+        // Ensure sidebar is closed on mobile when entering
         if (DOM.sidebar) {
             DOM.sidebar.classList.remove('open');
-            DOM.sidebar.style.display = 'none'; // Force hide
-            setTimeout(() => {
-                DOM.sidebar.style.display = ''; // Restore after browser paints
-            }, 50);
         }
         DOM.sidebarOverlay?.classList.add('hidden');
 

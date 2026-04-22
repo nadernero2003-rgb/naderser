@@ -137,42 +137,11 @@ export async function renderServantsTable(source = null) {
     }
 
     if (AppState.servantsViewMode === 'table') {
+        const isAdmin = AppState.isGeneralSecretaryMode;
         tbody.className = "w-full overflow-x-auto bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 block";
-        let rows = source.map((s, i) => {
-            const val = v => v || '-';
-            const imgUrl = s.imageUrl || s.image;
-            const imgHtml = imgUrl
-                ? '<img src="' + getSafeSrc(imgUrl) + '" class="w-10 h-10 rounded-full object-cover border border-slate-200 mx-auto">'
-                : '<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-400 text-xs mx-auto"><i class="fas fa-user"></i></div>';
-
-            // Service badge for admin mode
-            const svcConfig = SERVICES.find(sv => sv.name === s.serviceName);
-            const svcBadge = isAdmin && s.serviceName
-                ? '<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border" style="color:' + (svcConfig?.icon || '#0d9488') + ';border-color:' + (svcConfig?.border || svcConfig?.icon || '#0d9488') + '20;background:' + (svcConfig?.border || svcConfig?.icon || '#0d9488') + '15">' + s.serviceName + '</span>'
-                : '';
-
-            const actionsBtns = isAdmin ? '' :
-                ('<td class="p-4 text-center">' +
-                    '<div class="flex justify-center gap-2">' +
-                    '<button class="edit-btn text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 w-8 h-8 rounded-lg transition-all" data-id="' + s.id + '"><i class="fas fa-edit"></i></button>' +
-                    '<button class="delete-btn text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 w-8 h-8 rounded-lg transition-all" data-id="' + s.id + '"><i class="fas fa-trash"></i></button>' +
-                    '</div></td>');
-            return '<tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b dark:border-slate-700 last:border-0">' +
-                '<td class="p-4 text-center font-bold text-slate-400 text-xs">' + (i + 1) + '</td>' +
-                '<td class="p-4 flex justify-center">' + imgHtml + '</td>' +
-                '<td class="p-4 text-right font-bold">' +
-                '<a href="#" onclick="event.preventDefault(); showServantProfile(\'' + s.id + '\', \'' + (s.serviceName || AppState.currentServiceName) + '\')" class="text-teal-600 dark:text-teal-400 hover:underline servant-profile-link">' + val(s.name) + '</a>' +
-                '</td>' +
-                (isAdmin ? '<td class="p-4 text-center">' + svcBadge + '</td>' : '') +
-                '<td class="p-4 text-center font-bold text-slate-600 dark:text-slate-300 text-sm">' + val(s.chapter) + '</td>' +
-                '<td class="p-4 text-center font-bold text-slate-600 dark:text-slate-300 text-sm" dir="ltr">' + val(s.mobile) + '</td>' +
-                actionsBtns +
-                '</tr>';
-        }).join('');
-
         tbody.innerHTML = '<table class="w-full text-right border-collapse">' +
             '<thead>' +
-            '<tr class="bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">' +
+            '<tr class="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">' +
             '<th class="p-4 text-center font-black">#</th>' +
             '<th class="p-4 text-center font-black w-16">الصورة</th>' +
             '<th class="p-4 text-right font-black">الخادم</th>' +
@@ -182,7 +151,40 @@ export async function renderServantsTable(source = null) {
             (isAdmin ? '' : '<th class="p-4 text-center font-black">إجراءات</th>') +
             '</tr>' +
             '</thead>' +
-            '<tbody>' + rows + '</tbody>' +
+            '<tbody>' + source.map((s, i) => {
+                const val = v => v || '-';
+                const imgUrl = s.imageUrl || s.image;
+                const imgHtml = imgUrl
+                    ? '<img src="' + getSafeSrc(imgUrl) + '" class="w-10 h-10 rounded-full object-cover border border-slate-200 mx-auto">'
+                    : '<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-400 text-xs mx-auto"><i class="fas fa-user"></i></div>';
+
+                const svcConfig = (SERVICES || []).find(sv => sv.name === s.serviceName);
+                const svcBadge = isAdmin && s.serviceName
+                    ? '<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border" style="color:' + (svcConfig?.icon || '#0d9488') + ';border-color:' + (svcConfig?.border || svcConfig?.icon || '#0d9488') + '20;background:' + (svcConfig?.border || svcConfig?.icon || '#0d9488') + '15">' + s.serviceName + '</span>'
+                    : '';
+
+                const actionsBtns = isAdmin ? '' :
+                    ('<td class="p-4 text-center">' +
+                        '<div class="flex justify-center gap-2">' +
+                        '<button class="edit-btn text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 w-8 h-8 rounded-lg transition-all" data-id="' + s.id + '"><i class="fas fa-edit"></i></button>' +
+                        '<button class="delete-btn text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 w-8 h-8 rounded-lg transition-all" data-id="' + s.id + '"><i class="fas fa-trash"></i></button>' +
+                        '</div></td>');
+
+                return '<tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b dark:border-slate-700 last:border-0">' +
+                    '<td class="p-4 text-center font-bold text-slate-400 text-xs">' + (i + 1) + '</td>' +
+                    '<td class="p-4 flex justify-center">' + imgHtml + '</td>' +
+                    '<td class="p-4 text-right font-bold">' +
+                    '<div class="flex items-center gap-2">' +
+                    '<input type="checkbox" class="servant-row-checkbox w-4 h-4 rounded border-slate-300" data-id="' + s.id + '">' +
+                    '<a href="#" onclick="event.preventDefault(); showServantProfile(\'' + s.id + '\', \'' + (s.serviceName || AppState.currentServiceName) + '\')" class="text-teal-600 dark:text-teal-400 hover:underline servant-profile-link">' + val(s.name) + '</a>' +
+                    '</div>' +
+                    '</td>' +
+                    (isAdmin ? '<td class="p-4 text-center">' + svcBadge + '</td>' : '') +
+                    '<td class="p-4 text-center font-bold text-slate-600 dark:text-slate-300 text-sm">' + val(s.chapter) + '</td>' +
+                    '<td class="p-4 text-center font-bold text-slate-600 dark:text-slate-300 text-sm" dir="ltr">' + val(s.mobile) + '</td>' +
+                    actionsBtns +
+                    '</tr>';
+            }).join('') + '</tbody>' +
             '</table>';
     } else {
         // Grid View
@@ -196,6 +198,9 @@ export async function renderServantsTable(source = null) {
 
             return '<div class="relative bg-white dark:bg-slate-800 rounded-3xl p-5 pt-10 shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-xl hover:border-teal-400/50 transition-all transform hover:-translate-y-1.5 group">' +
                 imgHtml +
+                '<div class="absolute top-4 right-4">' +
+                '<input type="checkbox" class="servant-row-checkbox w-5 h-5 rounded-lg border-slate-300 cursor-pointer shadow-sm" data-id="' + s.id + '">' +
+                '</div>' +
                 '<div class="text-center mt-3">' +
                 '<h3 class="font-black text-lg mb-1 leading-tight">' +
                 '<a href="#" onclick="event.preventDefault(); showServantProfile(\'' + s.id + '\', \'' + (s.serviceName || AppState.currentServiceName) + '\')" class="text-teal-600 dark:text-teal-400 hover:underline servant-profile-link">' + val(s.name) + '</a>' +
@@ -212,7 +217,6 @@ export async function renderServantsTable(source = null) {
                 '<span class="text-[11px] font-bold text-slate-600 dark:text-slate-300" dir="ltr">' + val(s.mobile) + '</span>' +
                 '</div>' +
                 '</div>' +
-                // GS mode: no edit/delete buttons on cards
                 (isAdmin ? '' :
                     ('<div class="absolute top-4 left-4 flex gap-2">' +
                         '<button class="edit-btn bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-500 hover:text-white w-8 h-8 rounded-full transition-colors flex items-center justify-center shadow-sm" data-id="' + s.id + '" title="تعديل"><i class="fas fa-edit"></i></button>' +
@@ -222,6 +226,68 @@ export async function renderServantsTable(source = null) {
                 '</div>';
         }).join('');
     }
+
+    // Re-bind listeners for checkboxes and update button
+    document.querySelectorAll('.servant-row-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateBulkDeleteButton);
+    });
+
+    // Toggle button icon sync
+    const toggleBtn = DOM.servantsViewToggle;
+    if (toggleBtn) {
+        const icon = toggleBtn.querySelector('i');
+        if (icon) {
+            icon.className = AppState.servantsViewMode === 'table' ? 'fas fa-th-large' : 'fas fa-list';
+        }
+    }
+
+    // Uncheck global selector if view refreshed and update button
+    if (DOM.globalSelectAllServants) DOM.globalSelectAllServants.checked = false;
+    updateBulkDeleteButton();
+}
+
+export function updateBulkDeleteButton() {
+    const checked = document.querySelectorAll('.servant-row-checkbox:checked');
+    const totalCount = document.querySelectorAll('.servant-row-checkbox').length;
+
+    if (checked.length > 0) {
+        DOM.bulkDeleteServantsBtn?.classList.remove('hidden-view');
+        if (DOM.bulkDeleteCount) DOM.bulkDeleteCount.textContent = checked.length;
+    } else {
+        DOM.bulkDeleteServantsBtn?.classList.add('hidden-view');
+    }
+
+    // Sync global checkbox
+    if (DOM.globalSelectAllServants) {
+        DOM.globalSelectAllServants.checked = totalCount > 0 && checked.length === totalCount;
+    }
+}
+
+export async function bulkDeleteServants() {
+    const checked = document.querySelectorAll('.servant-row-checkbox:checked');
+    if (checked.length === 0) return;
+
+    const ids = Array.from(checked).map(cb => cb.dataset.id);
+    showConfirm('تأكيد الحذف الجماعي', `هل أنت متأكد من حذف ${ids.length} خادم؟ هذا الإجراء لا يمكن التراجع عنه.`, async () => {
+        showLoading(true);
+        try {
+            if (AppState.isLocalMode) {
+                let servants = Local.servants(AppState.currentServiceName).filter(s => !ids.includes(s.id));
+                Local.saveServants(servants, AppState.currentServiceName);
+                await loadServants();
+            } else {
+                const batch = ids.map(id => deleteDoc(getServiceDoc('servants', id)));
+                await Promise.all(batch);
+                await loadServants();
+            }
+            showMessage(`تم حذف ${ids.length} خادم بنجاح.`);
+        } catch (e) {
+            console.error(e);
+            showMessage('حدث خطأ أثناء الحذف الجماعي.', true);
+        } finally {
+            showLoading(false);
+        }
+    });
 }
 
 // ─── CRUD Operations ───────────────────────────────────────────────
@@ -407,7 +473,6 @@ export async function processExcelPreview() {
         const headers = rows[headerIdx].map(h => String(h).trim());
         const dataRows = rows.slice(headerIdx + 1);
 
-        // Find mapping
         const findCol = (terms) => headers.findIndex(h => terms.some(t => h.includes(t)));
         const map = {
             name: findCol(['الاسم', 'اسم']),
@@ -416,31 +481,41 @@ export async function processExcelPreview() {
             natId: findCol(['قومي', 'بطاقة']),
             chapter: findCol(['فصل', 'مرحلة']),
             prevSvc: findCol(['سابقة', 'خدمة سابقة']),
-            joinDate: findCol(['التحاق', 'بداية'])
+            joinDate: findCol(['التحاق', 'بداية']),
+            qualification: findCol(['مؤهل', 'المؤهل']),
+            job: findCol(['وظيفة', 'عمل', 'مهنة']),
+            address: findCol(['عنوان', 'سكن']),
+            confessionFather: findCol(['اب الاعتراف', 'أب الاعتراف', 'اعتراف', 'الاعتراف'])
         };
+
+        const existingNames = (AppState.isGeneralSecretaryMode ? AppState.allServantsCache : AppState.servantsCache).map(s => s.name.trim());
 
         const result = dataRows.map((r, idx) => {
             if (!r[map.name] || String(r[map.name]).trim() === '') return null; // Skip empty names silently
 
+            const name = String(r[map.name]).trim();
+            const isDuplicate = existingNames.includes(name);
+
             const item = {
-                name: String(r[map.name]).trim(),
+                name: name,
                 mobile: map.mobile !== -1 && r[map.mobile] ? String(r[map.mobile]).trim() : '',
                 dob: map.dob !== -1 ? parseDob(r[map.dob]) : '',
                 nationalId: map.natId !== -1 && r[map.natId] ? String(r[map.natId]).trim() : '',
                 chapter: map.chapter !== -1 && r[map.chapter] ? String(r[map.chapter]).trim() : '',
                 currentService: map.prevSvc !== -1 && r[map.prevSvc] ? String(r[map.prevSvc]).trim() : '',
                 joinDate: map.joinDate !== -1 ? parseDob(r[map.joinDate]) : '',
-                isValid: true,
-                errors: []
+                qualification: map.qualification !== -1 && r[map.qualification] ? String(r[map.qualification]).trim() : '',
+                job: map.job !== -1 && r[map.job] ? String(r[map.job]).trim() : '',
+                address: map.address !== -1 && r[map.address] ? String(r[map.address]).trim() : '',
+                confessionFather: map.confessionFather !== -1 && r[map.confessionFather] ? String(r[map.confessionFather]).trim() : '',
+                isValid: !isDuplicate,
+                errors: isDuplicate ? ['هذا الخادم مسجل مسبقاً'] : []
             };
 
             // Basic Validation
-            if (!item.name || item.name.length < 3) {
+            if (item.name.length < 3) {
                 item.isValid = false;
                 item.errors.push('الاسم قصير جداً');
-            }
-            if (item.mobile && !/^\d+$/.test(item.mobile)) {
-                // item.errors.push('رقم الموبايل غير صحيح'); // Just a warning maybe?
             }
 
             return item;
@@ -467,7 +542,7 @@ function renderImportPreview() {
     if (!tbody) return;
 
     if (!AppState.pendingImport.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-400">لا توجد بيانات صالحة للاستيراد</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-slate-400">لا توجد بيانات صالحة للاستيراد</td></tr>';
         return;
     }
 
@@ -483,52 +558,67 @@ function renderImportPreview() {
                 <td class="p-3 text-center">${statusIcon}</td>
                 <td class="p-3 font-bold">${item.name}</td>
                 <td class="p-3 text-slate-500 font-mono text-xs">${item.mobile || '-'}</td>
-                <td class="p-3 text-slate-500 text-xs">${item.dob || '-'}</td>
+                <td class="p-3 text-slate-500 text-xs">${item.address || '-'}</td>
+                <td class="p-3 text-slate-500 text-xs">${item.confessionFather || '-'}</td>
+                <td class="p-3 text-slate-500 text-xs">${item.job || '-'}</td>
                 <td class="p-3 text-slate-500 text-xs">${item.chapter || '-'}</td>
             </tr>
         `;
     }).join('');
 }
 
+let isCommittingImport = false;
 export async function commitExcelImport() {
-    const validData = AppState.pendingImport.filter(i => i.isValid);
+    if (isCommittingImport) return;
+
+    const validData = [...AppState.pendingImport.filter(i => i.isValid)];
     if (!validData.length) {
         showMessage('لا توجد بيانات صالحة لحفظها.', true);
         return;
     }
 
+    isCommittingImport = true;
     showLoading(true);
     try {
-        const batch = validData.map(item => {
-            const { isValid, errors, ...cleanData } = item;
-            return addDoc(getServiceCol('servants'), cleanData);
-        });
+        const batchSize = 10; // Process in small batches to be safe
+        for (let i = 0; i < validData.length; i += batchSize) {
+            const chunk = validData.slice(i, i + batchSize);
+            const promises = chunk.map(item => {
+                const { isValid, errors, ...cleanData } = item;
+                return addDoc(getServiceCol('servants'), cleanData);
+            });
+            await Promise.all(promises);
+        }
 
-        await Promise.all(batch);
         showMessage(`تم استيراد ${validData.length} خادم بنجاح ✓`);
+
+        // Clear state BEFORE closing to avoid race conditions
+        AppState.pendingImport = [];
+
         closeModal(document.getElementById('importModal'));
 
         // Reset Modal UI for next time
         document.getElementById('importStep1').classList.remove('hidden-view');
         document.getElementById('importStep2').classList.add('hidden-view');
         document.getElementById('excelFile').value = '';
-        AppState.pendingImport = [];
 
     } catch (e) {
         console.error(e);
         showMessage('حدث خطأ أثناء الحفظ في قاعدة البيانات.', true);
     } finally {
+        isCommittingImport = false;
         showLoading(false);
     }
 }
 
 export function exportServantsToExcel() {
-    const header = ['الاسم', 'الموبايل', 'تاريخ الميلاد', 'الرقم القومي', 'الفصل', 'الخدمة السابقة', 'تاريخ الالتحاق', 'الوظيفة', 'المؤهل'];
+    const header = ['الاسم', 'الموبايل', 'تاريخ الميلاد', 'الرقم القومي', 'الفصل', 'الخدمة السابقة', 'تاريخ الالتحاق', 'المؤهل', 'الوظيفة', 'العنوان', 'اب الاعتراف'];
     const list = AppState.servantsCache || [];
-    const rows = [header, ...list.map(s => [s.name, s.mobile, s.dob, s.nationalId, s.chapter, s.currentService, s.joinDate, s.job, s.qualification])];
+    const rows = [header, ...list.map(s => [s.name, s.mobile, s.dob, s.nationalId, s.chapter, s.currentService, s.joinDate, s.qualification, s.job, s.address, s.confessionFather])];
     const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(rows);
     XLSX.utils.book_append_sheet(wb, ws, 'الخدام');
-    XLSX.writeFile(wb, 'خدام.xlsx');
+    const serviceName = AppState.currentServiceName ? `_${AppState.currentServiceName}` : '';
+    XLSX.writeFile(wb, `خدام${serviceName}.xlsx`);
 }
 
 // ─── Birthdays ─────────────────────────────────────────────────────
@@ -941,12 +1031,12 @@ export function downloadExcelTemplate() {
             ["قالب استيراد الخدام - نظام إدارة الخدمة"],
             ["ملاحظة: لا تقم بتعديل ترتيب الأعمدة. يتم بدء القراءة من السطر الخامس."],
             ["تنسيق التاريخ المطلوب: YYYY-MM-DD (مثال: 1990-05-15)"],
-            ["الاسم", "الموبايل", "تاريخ الميلاد", "الرقم القومي", "الفصل", "الخدمة السابقة", "تاريخ الالتحاق"]
+            ["الاسم", "الموبايل", "تاريخ الميلاد", "الرقم القومي", "الفصل", "الخدمة السابقة", "تاريخ الالتحاق", "المؤهل", "الوظيفة", "العنوان", "أب الاعتراف"]
         ];
         const ws = XLSX.utils.aoa_to_sheet(wsData);
 
         // Basic styling/column width
-        ws['!cols'] = [{ wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 20 }, { wch: 20 }];
+        ws['!cols'] = [{ wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 30 }, { wch: 20 }];
 
         XLSX.utils.book_append_sheet(wb, ws, "الخدام");
         XLSX.writeFile(wb, "قالب_استيراد_الخدام.xlsx");
@@ -961,3 +1051,4 @@ window.showServantProfile = showServantProfile;
 window.openEditModal = openEditModal;
 window.deleteServant = deleteServant;
 window.downloadExcelTemplate = downloadExcelTemplate;
+window.bulkDeleteServants = bulkDeleteServants;

@@ -166,9 +166,7 @@ async function bootstrap() {
         } catch (e) { console.warn("Failed to load custom background or opacity", e); }
 
         updateServiceCardBadges();
-        await updateBirthdayBadges();  // Check for today's birthdays
-        // Re-check birthday badges after delay (ensures DOM is fully ready)
-        setTimeout(() => updateBirthdayBadges(), 3000);
+        updateBirthdayBadges();  // Check for today's birthdays (cached + background)
         initPWA();               // Setup install logic
         initOfflineIndicator();   // Show offline/online status
 
@@ -1028,7 +1026,7 @@ function initFollowUpPage() {
 }
 
 // ─── App Init ─────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', bootstrap);
+// Redundant listener removed. bootstrap() is called at the end of the file.
 
 // ─── PWA Installation & Service Worker ──────────────────────────
 let deferredPrompt = null;
@@ -1094,15 +1092,27 @@ async function triggerInstall() {
 }
 
 // ─── Birthday Badges on Service Cards ───────────────────────────
+// ─── Birthday Badges on Service Cards (With Local Caching) ──────
 async function updateBirthdayBadges() {
     try {
+        const today = new Date();
+        const dateKey = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+        const storageKey = 'khedmaty-birthdays-cache';
+        
+        // 1. Try to load from cache for immediate display
+        const cached = JSON.parse(localStorage.getItem(storageKey) || 'null');
+        if (cached && cached.date === dateKey) {
+            applyBirthdayBadges(cached.data);
+        }
+
+        // 2. Fetch fresh data in background
         const { authReady, getDocs, collection } = await import('./firebase.js');
         await authReady;
         if (AppState.isLocalMode) return;
 
-        const today = new Date();
         const todayMonth = today.getMonth() + 1;
         const todayDay = today.getDate();
+        const freshData = {};
 
         const servicePromises = SERVICES.filter(s => !s.isGroup).map(async service => {
             try {
@@ -1120,35 +1130,47 @@ async function updateBirthdayBadges() {
                     }
                 });
                 if (birthdayCount > 0) {
-                    const badgeId = `birthday-badge-${service.name.replace(/\s+/g, '-')}`;
-                    let badge = document.getElementById(badgeId);
-                    if (!badge) {
-                        const card = document.querySelector(`.service-card[data-service="${service.name}"]`);
-                        if (card) {
-                            const iconContainer = card.querySelector('.relative.w-16') || card.querySelector('.relative');
-                            if (iconContainer) {
-                                badge = document.createElement('span');
-                                badge.id = badgeId;
-                                badge.className = 'absolute -top-2 -left-2 text-lg animate-bounce z-10';
-                                badge.style.cssText = 'filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));';
-                                badge.title = `🎂 ${birthdayCount} عيد ميلاد اليوم!`;
-                                iconContainer.style.position = 'relative';
-                                iconContainer.appendChild(badge);
-                            }
-                        }
-                    }
-                    if (badge) {
-                        badge.textContent = '🎂';
-                        badge.classList.remove('hidden-view');
-                    }
+                    freshData[service.name] = birthdayCount;
                 }
-            } catch (e) {
-                console.error(`Birthday fetch error for ${service.name}:`, e);
-            }
+            } catch (e) { console.error(`Birthday fetch error for ${service.name}:`, e); }
         });
 
         await Promise.all(servicePromises);
+        
+        // 3. Update UI and cache if changed
+        localStorage.setItem(storageKey, JSON.stringify({ date: dateKey, data: freshData }));
+        applyBirthdayBadges(freshData);
+
     } catch (e) { console.error('Birthday badges error:', e); }
+}
+
+function applyBirthdayBadges(birthdayData) {
+    // First hide all existing birthday badges (to handle cases where someone might have moved)
+    document.querySelectorAll('[id^="birthday-badge-"]').forEach(b => b.classList.add('hidden-view'));
+
+    Object.entries(birthdayData).forEach(([serviceName, count]) => {
+        const badgeId = `birthday-badge-${serviceName.replace(/\s+/g, '-')}`;
+        let badge = document.getElementById(badgeId);
+        if (!badge) {
+            const card = document.querySelector(`.service-card[data-service="${serviceName}"]`);
+            if (card) {
+                const iconContainer = card.querySelector('.relative.w-16') || card.querySelector('.relative');
+                if (iconContainer) {
+                    badge = document.createElement('span');
+                    badge.id = badgeId;
+                    badge.className = 'absolute -top-2 -left-2 text-lg animate-bounce z-10';
+                    badge.style.cssText = 'filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); cursor: help;';
+                    iconContainer.style.position = 'relative';
+                    iconContainer.appendChild(badge);
+                }
+            }
+        }
+        if (badge) {
+            badge.textContent = '🎂';
+            badge.title = `🎂 ${count} عيد ميلاد اليوم!`;
+            badge.classList.remove('hidden-view');
+        }
+    });
 }
 
 // Start the application
